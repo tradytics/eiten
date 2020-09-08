@@ -60,7 +60,7 @@ Four different portfolio strategies are currently supported by the toolkit.
 	1. MVP tries to minimize the variance of the portfolio. These portfolios are lowest risk and reward.
 3. **Maximum Sharpe Ratio Portfolio (MSR)**
 	1. MSR solves an optimization problem that tries to maximizes the sharpe ratio of the portfolio. It uses past returns during the optimization process which means if past returns are not the same as future returns, the results can vary in future.
-4. **Genetic Algorithm based Portfolio**
+4. **Genetic Algorithm (GA) based Portfolio**
 	1. This is our own implementation of a GA based portfolio that again tries to maximize the sharpe ratio but in a slightly more robust way. This usually provides more robust portfolios than the others.
 
 When you run the command above, our tool will generate portfolios from all these strategies and give them to you. Let us look at some resulting portfolios.
@@ -87,4 +87,4 @@ The backtests look pretty encouraging. The black dotted line is the market index
   <img src="figures/future_test_results.png">
 </p>
 
-These results are from April 29th, 2020 to September 4th, 2020. 
+These results are from April 29th, 2020 to September 4th, 2020. The eigen portfolio performed the best but it also had a lot of volatility. Moreover, most of those returns are due to TSLA rocketing in the last few months. After that, our GA algorithm worked quite effectively as it beat the market index. Again, as expected, the MVP had the lowest risk and reward and slowly went up in 4-5 months. This shows the effectiveness and power of these algorithmic portfolio optimization strategies where we've developed different portfolios for different kinds of risk and reward profiles.
