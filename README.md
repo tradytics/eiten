@@ -17,3 +17,18 @@ Eiten is an open source toolkit by [Tradytics](https://www.tradytics.com/) that 
 | portfolio_manager.py | Main file that takes in a bunch of arguments and generates several portfolios for you.
 | simulator.py | Simulator that uses historical returns and monte carlo to simulate future prices for the portfolios.
 | strategy_manager.py | Manages the strategies implemented in the 'strategies' folder.
+
+## Usage
+### Packages
+You will need to install the following package to train and test the models.
+- [Scikit-learn](https://scikit-learn.org/)
+- [Numpy](https://numpy.org/)
+- [Tqdm](https://github.com/tqdm/tqdm)
+- [Yfinance](https://github.com/ranaroussi/yfinance)
+- [Pandas](https://pandas.pydata.org/)
+- [Scipy](https://www.scipy.org/install.html)
+
+You can install all packages using the following command. Please note that the script was written using python3.
+``
+pip install -r requirements.txt
+``
