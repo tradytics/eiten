@@ -1,27 +1,21 @@
 # Basic libraries
 import os
-import ta
 import sys
-import json
 import math
-import pickle
 import random
-import requests
 import collections
 import numpy as np
-from os import walk
 import pandas as pd
-import yfinance as yf
-import datetime as dt
-from scipy.stats import linregress
-from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-from sklearn.ensemble import IsolationForest
+
+# Load our modules
 from data_loader import DataEngine
 from simulator import MontoCarloSimulator
 from backtester import BackTester
-import warnings
 from strategy_manager import StrategyManager
+
+# Ignore warnings
+import warnings
 warnings.filterwarnings("ignore")
 
 # Styling for plots
@@ -63,7 +57,7 @@ stocks_file_path = args.stocks_file_path
 
 """
 Sample run:
-python portfolio_manager.py --is_test 1 --future_bars 90 --data_granularity_minutes 3600 --history_to_use all --apply_noise_filtering 1 --market_index QQQ --only_long 1 --eigen_portfolio_number 2
+python portfolio_manager.py --is_test 1 --future_bars 90 --data_granularity_minutes 3600 --history_to_use all --apply_noise_filtering 1 --market_index QQQ --only_long 1 --eigen_portfolio_number 3
 """
 
 class ArgChecker:

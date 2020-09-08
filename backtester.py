@@ -1,26 +1,14 @@
 # Basic libraries
 import os
-import ta
 import sys
-import json
 import math
 import scipy
-import pickle
 import random
-import requests
 import collections
 import numpy as np
-from os import walk
 import pandas as pd
-import yfinance as yf
-import datetime as dt
-from scipy.stats import linregress
-from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-from sklearn.ensemble import IsolationForest
-from data_loader import DataEngine
 import warnings
-import scipy.stats as st
 warnings.filterwarnings("ignore")
 
 # Styling for plots
