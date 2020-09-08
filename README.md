@@ -113,6 +113,9 @@ These results are from April 29th, 2020 to September 4th, 2020. The eigen portfo
 ## Conclusion and Discussion
 We are happy to share this toolkit with the trading community and hope that people will like and contribute to it. As is the case with everything in trading, these strategies are not perfect but they are based on rigorous theory and some great empirical results. Please take care when trading with these strategies and always manage your risk. The above results were not cherry picked but the market has been highly bullish in the last few months which has led to the strong results shown above. We would love for the community to try out different strategies and share them with us.
 
+#### Special Thanks
+Special thanks to [Scott Rome's](https://srome.github.io/) blog. The eigen portfolios and minimum variance portfolio concepts came from his blog posts. The code for filtering eigen values of the covariance matrix was also mostly obtained from one of his posts.
+
 ## License
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
