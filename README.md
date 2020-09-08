@@ -55,7 +55,7 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 ### Portfolio Strategies
 Four different portfolio strategies are currently supported by the toolkit.
 1. Eigen Portfolios
-	1 These portfolios are orthogonal and uncorrelated to the market in general.
+  1 These portfolios are orthogonal and uncorrelated to the market in general.
 2. Minimum Variance Portfolio
 3. Maximum Sharpe Portfolio
 4. Genetic Algorithm based Portfolio
