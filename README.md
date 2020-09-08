@@ -66,9 +66,11 @@ Four different portfolio strategies are currently supported by the toolkit.
 When you run the command above, our tool will generate portfolios from all these strategies and give them to you. Let us look at some resulting portfolios.
 
 ### Resulting Portfolios
-#### Portfolio Weights
 For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies. For testing purposes, the above command used last five years of daily data up till April 29th. The remaining data for this year was used for forward testing i.e the portfolio strategies had no access to it when building the portfolios.
 
+**What if my portfolio needs different stocks?**: All you need to do is change the stocks in the stocks.txt file and run the tool again.
+
+#### Portfolio Weights
 <p align="center">
   <img src="figures/portfolio_weights.png">
 </p>
