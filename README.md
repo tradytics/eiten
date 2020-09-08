@@ -51,3 +51,10 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 - **only_long**: Whether to use long only portfolio or enable short selling as well. Long only portfolios have shown to have better performance using algorithmic techniques.
 - **eigen_portfolio_number**: Which eigen portfolio to use. Any value between 1-5 should work. The first eigen portfolio (1) represents the market portfolio and should act just like the underlying index such as SPY or QQQ. The second one is orthogonal and uncorrelated to the market and poses the greatest risk and reward. The following ones have reduced risk and reward. Read more on [eigen-portfolios](https://srome.github.io/Eigenvesting-I-Linear-Algebra-Can-Help-You-Choose-Your-Stock-Portfolio/).
 - **stocks_file_path**: File that contains the list of stocks that you want to use to build your portfolio.
+
+### Portfolio Strategies
+Four different portfolio strategies are currently supported by the toolkit.
+1. Eigen Portfolios
+2. Minimum Variance Portfolio
+3. Maximum Sharpe Portfolio
+4. Genetic Algorithm based Portfolio
