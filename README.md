@@ -79,3 +79,5 @@ We can see that the eigen portfolio is giving a large weight to TSLA while the o
 <p align="center">
   <img src="figures/backtest_results.png">
 </p>
+
+The backtests look pretty encouraging. The black dotted line is the market index i.e **QQQ**. Other lines are the strategies. Our custom genetic algorithm implementation seems to have the best backtest results because it's an advanced version of other strategies. The eigen portfolio that weighed TSLA the most have the most volatility but its profits are also very high. Finally, as expected, the MVP has the minimum variance and ultimately the least profits. However, since the variance is extremely low, it is a good portfolio for those who want to stay safe.
