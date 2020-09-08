@@ -46,7 +46,7 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 - **data_granularity_minutes**: How much granular data do you want to use to build your portfolios. For long term portfolios, you should use daily data but for short term, you can use hourly or minute level data. The possible values here are **3600, 60, 30, 15, 5, 1.** 3600 means daily.
 - **history_to_use**: Whether to use a specific number of historical bars or use everything that we receive from yahoo finance. For minute level data, we only receive upto one month of historical data. For daily, we receive 5 years worth of historical data. If you want to use all available data, the value should be **all** but if you want to use smaller history, you can set it to an integer value e.g **100** which will only use the last 100 bars to build the portfolios.
 - **apply_noise_filtering**: This uses [random matrix theory](http://faculty.baruch.cuny.edu/jgatheral/randommatrixcovariance2008.pdf) to filter out the covariance matrix from randomness thus yielding better portfolios. A value of 1 will enable it and 0 will disable it.
-- **market_index**: Which index do you want to use to compare your portfoliosl. This should mostly be **SPY** but since we analyzed tech stocks, we used **QQQ**.
+- **market_index**: Which index do you want to use to compare your portfolios. This should mostly be **SPY** but since we analyzed tech stocks, we used **QQQ**.
 - **only_long**: Whether to use long only portfolio or enable short selling as well. Long only portfolios have shown to have better performance using algorithmic techniques.
 - **eigen_portfolio_number**: Which eigen portfolio to use. Any value between 1-5 should work. The first eigen portfolio (1) represents the market portfolio and should act just like the underlying index such as SPY or QQQ. The second one is orthogonal and uncorrelated to the market and poses the greatest risk and reward. The following ones have reduced risk and reward. Read more on [eigen-portfolios](https://srome.github.io/Eigenvesting-I-Linear-Algebra-Can-Help-You-Choose-Your-Stock-Portfolio/).
 - **stocks_file_path**: File that contains the list of stocks that you want to use to build your portfolio.
@@ -58,7 +58,7 @@ Four different portfolio strategies are currently supported by the toolkit.
 2. **Minimum Variance Portfolio (MVP)**
 	1. MVP tries to minimize the variance of the portfolio. These portfolios are lowest risk and reward.
 3. **Maximum Sharpe Ratio Portfolio (MSR)**
-	1. MSR solves an optimization problem that tries to maximizes the sharpe ratio of the portfolio. It uses past returns during the optimization process which means if past returns are not the same as future returns, the results can vary in future.
+	1. MSR solves an optimization problem that tries to maximize the sharpe ratio of the portfolio. It uses past returns during the optimization process which means if past returns are not the same as future returns, the results can vary in future.
 4. **Genetic Algorithm (GA) based Portfolio**
 	1. This is our own implementation of a GA based portfolio that again tries to maximize the sharpe ratio but in a slightly more robust way. This usually provides more robust portfolios than the others.
 
@@ -74,7 +74,7 @@ For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt
   <img src="figures/portfolio_weights.png">
 </p>
 
-We can see that the eigen portfolio is giving a large weight to TSLA while the others are dividing their weights more uniformly. An interesting phenomena happening here is the hedging with **SQQQ** that all the strategies have learned automatically. Every tool is assigning some positive weight to SQQQ while also assigning positive weights to other stocks which indicates that the strategies are automatically trying to hedge the portfolios from risk. Obviously this is not perfect but just the fact that it's happening is fascinating. Let us look at the backtest results on the last five years prior to April 29, 2020.
+We can see that the eigen portfolio is giving a large weight to TSLA while the others are dividing their weights more uniformly. An interesting phenomena happening here is the hedging with **SQQQ** that all the strategies have learned automatically. Every tool is assigning some positive weight to SQQQ while also assigning positive weights to other stocks which indicates that the strategies are automatically trying to hedge the portfolios from risk. Obviously this is not perfect, but just the fact that it's happening is fascinating. Let us look at the backtest results on the last five years prior to April 29, 2020.
 
 ### Backtest Results
 <p align="center">
