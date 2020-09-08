@@ -53,15 +53,15 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 
 ### Some Portfolio Building Examples
 Here are a few examples for building different types of portfolios.
-- Both long and short portfolios by analyzing last 90 days data and keeping the last 30 days as testing data. This will give us 60 days of portfolio construction data and 30 days of testing.
+- Both **long and short** portfolios by analyzing last **90 days** data and keeping the **last 30 days** as testing data. This will give us 60 days of portfolio construction data and 30 days of testing.
 ```
 python portfolio_manager.py --is_test 1 --future_bars 30 --data_granularity_minutes 3600 --history_to_use 90 --apply_noise_filtering 1 --market_index QQQ --only_long 0 --eigen_portfolio_number 3 --stocks_file_path stocks/stocks.txt
 ```
-- Only long portfolio on 60 minute bars of the last 30 days. No future testing. Compare the results with SPY index instead of QQQ.
+- Only **long portfolio** on **60 minute bars** of the last **30 days**. **No future testing**. Compare the results with **SPY** index instead of QQQ.
 ```
 python portfolio_manager.py --is_test 0 --future_bars 0 --data_granularity_minutes 60 --history_to_use all --apply_noise_filtering 1 --market_index SPY --only_long 1 --eigen_portfolio_number 3 --stocks_file_path stocks/stocks.txt
 ```
-- Do not apply noise filtering on the covariance matrix. Use the first eigen portfolio (market portfolio) and compare with SQQQ,
+- **Do not apply noise filtering** on the covariance matrix. Use the **first eigen portfolio** (market portfolio) and compare with SQQQ,
 ```
 python portfolio_manager.py --is_test 1 --future_bars 90 --data_granularity_minutes 3600 --history_to_use all --apply_noise_filtering 0 --market_index SQQQ --only_long 1 --eigen_portfolio_number 1 --stocks_file_path stocks/stocks.txt
 ```
