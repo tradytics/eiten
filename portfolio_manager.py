@@ -260,7 +260,7 @@ class Eiten:
 # Check arguments
 argChecker = ArgChecker()
 
-# Run strategie
+# Run strategies
 eiten = Eiten()
 eiten.run_strategies()
 
