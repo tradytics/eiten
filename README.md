@@ -35,4 +35,4 @@ pip install -r requirements.txt
 ```
 
 ### Build your portfolios
-Let us see how we can use all the strategies given in the toolkit to build our portfolios. The first thing you need to do is modify the stocks.txt file in the stocks folder and add the stocks of your choice. It is recommended to keep the list small i.e anywhere between 5 to 50 stocks should be fine.
+Let us see how we can use all the strategies given in the toolkit to build our portfolios. The first thing you need to do is modify the **stocks.txt** file in the **stocks** folder and add the stocks of your choice. It is recommended to keep the list small i.e anywhere between 5 to 50 stocks should be fine. 
