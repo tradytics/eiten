@@ -67,7 +67,11 @@ When you run the command above, our tool will generate portfolios from all these
 ## Resulting Portfolios
 For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies. For testing purposes, the above command used last five years of daily data up till April 29th. The remaining data for this year was used for forward testing i.e the portfolio strategies had no access to it when building the portfolios.
 
-**What if my portfolio needs different stocks?**: All you need to do is change the stocks in the stocks.txt file and run the tool again.
+**What if my portfolio needs different stocks?**: All you need to do is change the stocks in the stocks.txt file and run the tool again. Here is the final command again that we run in order to get our portfolios:
+
+```
+python portfolio_manager.py --is_test 1 --future_bars 90 --data_granularity_minutes 3600 --history_to_use all --apply_noise_filtering 1 --market_index QQQ --only_long 1 --eigen_portfolio_number 3 --stocks_file_path stocks/stocks.txt
+```
 
 ### Portfolio Weights
 <p align="center">
