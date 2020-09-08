@@ -88,3 +88,14 @@ The backtests look pretty encouraging. The black dotted line is the market index
 </p>
 
 These results are from April 29th, 2020 to September 4th, 2020. The eigen portfolio performed the best but it also had a lot of volatility. Moreover, most of those returns are due to TSLA rocketing in the last few months. After that, our GA algorithm worked quite effectively as it beat the market index. Again, as expected, the MVP had the lowest risk and reward and slowly went up in 4-5 months. This shows the effectiveness and power of these algorithmic portfolio optimization strategies where we've developed different portfolios for different kinds of risk and reward profiles.
+
+
+### Conclusion and Discussion
+We are happy to share this toolkit with the trading community and hope that people will like and contribute to it. As is the case with everything in trading, these strategies are not perfect but they are based on rigorous theory and some great empirical results. Please take care when trading with these strategies and always manage your risk.
+
+## License
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+A product by [Tradytics](https://www.tradytics.com/)
+
+Copyright (c) 2020-present, Tradytics.com
