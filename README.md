@@ -67,8 +67,15 @@ When you run the command above, our tool will generate portfolios from all these
 
 ### Resulting Portfolios
 #### Portfolio Weights
-For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies.
+For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies. For testing purposes, the above command used last five years of daily data up till April 29th. The remaining data for this year was used for forward testing i.e the portfolio strategies had no access to it when building the portfolios.
 
 <p align="center">
   <img src="figures/portfolio_weights.png">
+</p>
+
+We can see that the eigen portfolio is giving a large weight to TSLA while the others are dividing their weights more uniformly. An interesting phenomena happening here is the hedging with **SQQQ** that all the strategies have learned automatically. Every tool is assigning some positive weight to SQQQ while also assigning positive weights to other stocks which indicates that the strategies are automatically trying to hedge the portfolios from risk. Obviously this is not perfect but just the fact that it's happening is fascinating. Let us look at the backtest results on the last five years prior to April 29, 2020.
+
+#### Backtest Results
+<p align="center">
+  <img src="figures/backtest_results.png">
 </p>
