@@ -44,6 +44,7 @@ argParser.add_argument("--apply_noise_filtering", type=int, default = 1, help="W
 argParser.add_argument("--only_long", type=int, default = 1, help="Whether to only long the stocks or do both long and short.")
 argParser.add_argument("--market_index", type=str, default = "SPY", help="Which index to use for comparisons.")
 argParser.add_argument("--eigen_portfolio_number", type=int, default = 2, help="Which eigen portfolio to choose. By default, the 2nd one is choosen as it gives the most risk and reward.")
+argParser.add_argument("--stocks_file_path", type=str, default = "stocks/stocks.txt", help="Stocks file that contains the list of stocks you want to build your portfolio with.")
 
 # Get arguments
 args = argParser.parse_args()
@@ -58,6 +59,7 @@ apply_noise_filtering = args.apply_noise_filtering
 market_index = args.market_index
 is_only_long = args.only_long
 eigen_portfolio_number = args.eigen_portfolio_number
+stocks_file_path = args.stocks_file_path
 
 """
 Sample run:
@@ -101,12 +103,14 @@ class Eiten:
 		self.MARKET_INDEX = market_index
 		self.IS_TEST = is_test
 		self.EIGEN_PORTFOLIO_NUMBER = eigen_portfolio_number
+		self.STOCKS_FILE_PATH = stocks_file_path
 
 		# Create data engine
 		self.dataEngine = DataEngine(self.HISTORY_TO_USE, self.DATA_GRANULARITY_MINUTES, 
 							self.FUTURE_BARS_FOR_TESTING,
 							self.MARKET_INDEX,
-							self.IS_TEST)
+							self.IS_TEST,
+							self.STOCKS_FILE_PATH)
 
 		# Monto carlo simulator
 		self.simulator = MontoCarloSimulator()

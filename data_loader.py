@@ -20,7 +20,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class DataEngine:
-	def __init__(self, history_to_use, data_granularity_minutes, future_bars_for_testing, market_index, is_test):
+	def __init__(self, history_to_use, data_granularity_minutes, future_bars_for_testing, market_index, is_test, stocks_file_path_relative):
 		print("\n--> Data engine has been initialized...")
 		self.DATA_GRANULARITY_MINUTES = data_granularity_minutes
 		self.FUTURE_FOR_TESTING = future_bars_for_testing
@@ -29,10 +29,11 @@ class DataEngine:
 			self.HISTORY_TO_USE = int(self.HISTORY_TO_USE)
 		self.MARKET_INDEX = str(market_index).upper()
 		self.IS_TEST = is_test
+		self.STOCKS_FILE_PATH_RELATIVE = stocks_file_path_relative
 
 		# Stocks list
 		self.directory_path = str(os.path.dirname(os.path.abspath(__file__)))
-		self.stocks_file_path = self.directory_path + "/stocks/stocks.txt"
+		self.stocks_file_path = self.directory_path + "/" + self.STOCKS_FILE_PATH_RELATIVE
 		self.stocks_list = []
 
 		# Load stock names in a list
