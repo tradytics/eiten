@@ -55,7 +55,10 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 ### Portfolio Strategies
 Four different portfolio strategies are currently supported by the toolkit.
 1. Eigen Portfolios
-	1. These portfolios are orthogonal and uncorrelated to the market in general.
-2. Minimum Variance Portfolio
-3. Maximum Sharpe Portfolio
+	1. These portfolios are orthogonal and uncorrelated to the market in general thus yielding high reward and alpha. However, since they are uncorrelated to the market, they can also provide great risk. The first eigen portfolio is considered to be a market portfolio which is often ignored. The second one is uncorrelated to the others and provides the highest risk and reward. As we go down the numbering, the risk as well as the reward are reduced.
+2. Minimum Variance Portfolio (MVP)
+	1. MVP tries to minimize the variance of the portfolio. These portfolios are lowest risk and reward.
+3. Maximum Sharpe Ratio Portfolio (MSR)
+	1. MSR solves an optimization problem that tries to maximizes the sharpe ratio of the portfolio. It uses past returns during the optimization process which means if past returns are not the same as future returns, the results can vary in future.
 4. Genetic Algorithm based Portfolio
+	1. This is our own implementation of a GA based portfolio that again tries to maximize the sharpe ratio but in a slightly more robust way. This usually provides more robust portfolios than the others.
