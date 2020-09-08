@@ -29,6 +29,7 @@ You will need to install the following package to train and test the models.
 - [Scipy](https://www.scipy.org/install.html)
 
 You can install all packages using the following command. Please note that the script was written using python3.
-``
+
+```
 pip install -r requirements.txt
-``
+```
