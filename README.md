@@ -62,3 +62,12 @@ Four different portfolio strategies are currently supported by the toolkit.
 	1. MSR solves an optimization problem that tries to maximizes the sharpe ratio of the portfolio. It uses past returns during the optimization process which means if past returns are not the same as future returns, the results can vary in future.
 4. **Genetic Algorithm based Portfolio**
 	1. This is our own implementation of a GA based portfolio that again tries to maximize the sharpe ratio but in a slightly more robust way. This usually provides more robust portfolios than the others.
+
+When you run the command above, our tool will generate portfolios from all these strategies and give them to you. Let us look at some resulting portfolios.
+
+### Resulting Portfolios
+For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies.
+
+<p align="center">
+  <img src="figures/portfolio_weights.png">
+</p>
