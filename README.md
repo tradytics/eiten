@@ -9,9 +9,11 @@ Eiten is an open source toolkit by [Tradytics](https://www.tradytics.com/) that 
 | Path | Description
 | :--- | :----------
 | eiten | Main folder.
-| &boxur;&nbsp; figures | Folder to save data dictionaries for later use. 
-| &boxur;&nbsp; stocks | Figures for this github repositories.
-| &boxur;&nbsp; strategies | List of all the stocks that you want to analyze.
+| &boxur;&nbsp; figures | Figures for this github repositories.
+| &boxur;&nbsp; stocks | Folder to keep your stock lists that you want to use to create your portfolios.
+| &boxur;&nbsp; strategies | A bunch if strategies implemented in python.
+| backtester.py | Backtesting module that both backtests and forward tests all portfolios.
 | data_loader.py | Module for loading data from yahoo finance.
-| detection_engine.py | Main module for running anomaly detection on data and finding stocks with most unusual price and volume patterns.
-| feature_generator.py | Generates price and volume return features as well as plenty of technical indicators.
+| portfolio_manager.py | Main file that takes in a bunch of arguments and generates several portfolios for you.
+| simulator.py | Simulator that uses historical returns and monte carlo to simulate future prices for the portfolios.
+| strategy_manager.py | Manages the strategies implemented in the 'strategies' folder.
