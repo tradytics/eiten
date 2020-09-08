@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="350" src="figures/normal-512x512.png">
+  <img width="325" src="figures/normal-512x512.png">
 </p>
 
 # eiten
