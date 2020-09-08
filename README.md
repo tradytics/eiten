@@ -80,4 +80,11 @@ We can see that the eigen portfolio is giving a large weight to TSLA while the o
   <img src="figures/backtest_results.png">
 </p>
 
-The backtests look pretty encouraging. The black dotted line is the market index i.e **QQQ**. Other lines are the strategies. Our custom genetic algorithm implementation seems to have the best backtest results because it's an advanced version of other strategies. The eigen portfolio that weighed TSLA the most have the most volatility but its profits are also very high. Finally, as expected, the MVP has the minimum variance and ultimately the least profits. However, since the variance is extremely low, it is a good portfolio for those who want to stay safe.
+The backtests look pretty encouraging. The black dotted line is the market index i.e **QQQ**. Other lines are the strategies. Our custom genetic algorithm implementation seems to have the best backtest results because it's an advanced version of other strategies. The eigen portfolio that weighed TSLA the most have the most volatility but its profits are also very high. Finally, as expected, the MVP has the minimum variance and ultimately the least profits. However, since the variance is extremely low, it is a good portfolio for those who want to stay safe. The most interesting part comes next, let us look at the forward or future test results for these portfolios. 
+
+#### Forward Test Results
+<p align="center">
+  <img src="figures/future_test_results.png">
+</p>
+
+These results are from April 29th, 2020 to September 4th, 2020. 
