@@ -18,8 +18,7 @@ Eiten is an open source toolkit by [Tradytics](https://www.tradytics.com/) that 
 | simulator.py | Simulator that uses historical returns and monte carlo to simulate future prices for the portfolios.
 | strategy_manager.py | Manages the strategies implemented in the 'strategies' folder.
 
-## Usage
-### Packages
+## Required Packages 
 You will need to install the following package to train and test the models.
 - [Scikit-learn](https://scikit-learn.org/)
 - [Numpy](https://numpy.org/)
@@ -34,7 +33,7 @@ You can install all packages using the following command. Please note that the s
 pip install -r requirements.txt
 ```
 
-### Build your portfolios
+## Build your portfolios
 Let us see how we can use all the strategies given in the toolkit to build our portfolios. The first thing you need to do is modify the **stocks.txt** file in the **stocks** folder and add the stocks of your choice. It is recommended to keep the list small i.e anywhere between **5 to 50** stocks should be fine. We have already put a small stocks list containing a bunch of tech stocks like AAPL, MSFT, TSLA etc. Let us build our portfolios now. This is the main command that you need to run.
 
 ```
@@ -52,7 +51,7 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 - **eigen_portfolio_number**: Which eigen portfolio to use. Any value between 1-5 should work. The first eigen portfolio (1) represents the market portfolio and should act just like the underlying index such as SPY or QQQ. The second one is orthogonal and uncorrelated to the market and poses the greatest risk and reward. The following ones have reduced risk and reward. Read more on [eigen-portfolios](https://srome.github.io/Eigenvesting-I-Linear-Algebra-Can-Help-You-Choose-Your-Stock-Portfolio/).
 - **stocks_file_path**: File that contains the list of stocks that you want to use to build your portfolio.
 
-### Portfolio Strategies
+## Portfolio Strategies
 Four different portfolio strategies are currently supported by the toolkit.
 1. **Eigen Portfolios**
 	1. These portfolios are orthogonal and uncorrelated to the market in general thus yielding high reward and alpha. However, since they are uncorrelated to the market, they can also provide great risk. The first eigen portfolio is considered to be a market portfolio which is often ignored. The second one is uncorrelated to the others and provides the highest risk and reward. As we go down the numbering, the risk as well as the reward are reduced.
@@ -65,26 +64,26 @@ Four different portfolio strategies are currently supported by the toolkit.
 
 When you run the command above, our tool will generate portfolios from all these strategies and give them to you. Let us look at some resulting portfolios.
 
-### Resulting Portfolios
+## Resulting Portfolios
 For the purpose these results, we will use the 9 stocks in the stocks/stocks.txt file. When we run the above command, we first get the portfolio weights for all four strategies. For testing purposes, the above command used last five years of daily data up till April 29th. The remaining data for this year was used for forward testing i.e the portfolio strategies had no access to it when building the portfolios.
 
 **What if my portfolio needs different stocks?**: All you need to do is change the stocks in the stocks.txt file and run the tool again.
 
-#### Portfolio Weights
+### Portfolio Weights
 <p align="center">
   <img src="figures/portfolio_weights.png">
 </p>
 
 We can see that the eigen portfolio is giving a large weight to TSLA while the others are dividing their weights more uniformly. An interesting phenomena happening here is the hedging with **SQQQ** that all the strategies have learned automatically. Every tool is assigning some positive weight to SQQQ while also assigning positive weights to other stocks which indicates that the strategies are automatically trying to hedge the portfolios from risk. Obviously this is not perfect but just the fact that it's happening is fascinating. Let us look at the backtest results on the last five years prior to April 29, 2020.
 
-#### Backtest Results
+### Backtest Results
 <p align="center">
   <img src="figures/backtest_results.png">
 </p>
 
 The backtests look pretty encouraging. The black dotted line is the market index i.e **QQQ**. Other lines are the strategies. Our custom genetic algorithm implementation seems to have the best backtest results because it's an advanced version of other strategies. The eigen portfolio that weighed TSLA the most have the most volatility but its profits are also very high. Finally, as expected, the MVP has the minimum variance and ultimately the least profits. However, since the variance is extremely low, it is a good portfolio for those who want to stay safe. The most interesting part comes next, let us look at the forward or future test results for these portfolios. 
 
-#### Forward Test Results
+### Forward Test Results
 <p align="center">
   <img src="figures/future_test_results.png">
 </p>
@@ -92,7 +91,7 @@ The backtests look pretty encouraging. The black dotted line is the market index
 These results are from April 29th, 2020 to September 4th, 2020. The eigen portfolio performed the best but it also had a lot of volatility. Moreover, most of those returns are due to TSLA rocketing in the last few months. After that, our GA algorithm worked quite effectively as it beat the market index. Again, as expected, the MVP had the lowest risk and reward and slowly went up in 4-5 months. This shows the effectiveness and power of these algorithmic portfolio optimization strategies where we've developed different portfolios for different kinds of risk and reward profiles.
 
 
-### Conclusion and Discussion
+## Conclusion and Discussion
 We are happy to share this toolkit with the trading community and hope that people will like and contribute to it. As is the case with everything in trading, these strategies are not perfect but they are based on rigorous theory and some great empirical results. Please take care when trading with these strategies and always manage your risk. The above results were not cherry picked but the market has been highly bullish in the last few months which has led to the strong results shown above. We would love for the community to try out different strategies and share them with us.
 
 ## License
