@@ -206,7 +206,7 @@ class Eiten:
 		self.print_and_plot_portfolio_weights(mvp_portfolio_weights_dictionary, 'Minimum Variance Portfolio (MVP)', plot_num = 2)
 		self.print_and_plot_portfolio_weights(msr_portfolio_weights_dictionary, 'Maximum Sharpe Portfolio (MSR)', plot_num = 3)
 		self.print_and_plot_portfolio_weights(ga_portfolio_weights_dictionary, 'Genetic Algo (GA)', plot_num = 4)
-		self.draw_plot()
+		self.draw_plot("output/weights.png")
 
 		# Back test
 		print("\n*& Backtesting the portfolios...")
@@ -214,7 +214,7 @@ class Eiten:
 		self.backTester.back_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 		self.backTester.back_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 		self.backTester.back_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-		self.draw_plot()
+		self.draw_plot("output/backtest.png")
 
 		if self.IS_TEST:
 			print("\n#^ Future testing the portfolios...")
@@ -223,7 +223,7 @@ class Eiten:
 			self.backTester.future_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 			self.backTester.future_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 			self.backTester.future_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-			self.draw_plot()
+			self.draw_plot("output/future_tests.png")
 
 		# Simulation
 		print("\n+$ Simulating future prices using monte carlo...")
@@ -231,18 +231,18 @@ class Eiten:
 		self.simulator.simulate_portfolio(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 		self.simulator.simulate_portfolio(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 		self.simulator.simulate_portfolio(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-		self.draw_plot()
+		self.draw_plot("output/monte_carlo.png")
 
-	def draw_plot(self):
+	def draw_plot(self, filename="output/graph.png"):
 		"""
 		Draw plots
 		"""
-		plt.tight_layout()
 		plt.grid()
 		plt.legend(fontsize = 14)
 		if self.SAVE_PLOT:
-			plt.savefig('simulated.png')
+			plt.savefig(filename)
 		else:
+			plt.tight_layout()
 			plt.show()
 
 	def print_and_plot_portfolio_weights(self, weights_dictionary, strategy, plot_num):
