@@ -39,6 +39,7 @@ argParser.add_argument("--only_long", type=int, default = 1, help="Whether to on
 argParser.add_argument("--market_index", type=str, default = "SPY", help="Which index to use for comparisons.")
 argParser.add_argument("--eigen_portfolio_number", type=int, default = 2, help="Which eigen portfolio to choose. By default, the 2nd one is choosen as it gives the most risk and reward.")
 argParser.add_argument("--stocks_file_path", type=str, default = "stocks/stocks.txt", help="Stocks file that contains the list of stocks you want to build your portfolio with.")
+argParser.add_argument("--save_plot", type=bool, default=False, help="Save plot instead of rendering it immediately.")
 
 # Get arguments
 args = argParser.parse_args()
@@ -54,6 +55,7 @@ market_index = args.market_index
 is_only_long = args.only_long
 eigen_portfolio_number = args.eigen_portfolio_number
 stocks_file_path = args.stocks_file_path
+save_plot = args.save_plot
 
 """
 Sample run:
@@ -89,6 +91,7 @@ class ArgChecker:
 class Eiten:
 	def __init__(self):
 		print("\n--* Eiten has been initialized...")
+		self.SAVE_PLOT = save_plot
 		self.HISTORY_TO_USE = history_to_use
 		self.DATA_GRANULARITY_MINUTES = data_granularity_minutes
 		self.FUTURE_BARS_FOR_TESTING = future_bars
@@ -100,7 +103,7 @@ class Eiten:
 		self.STOCKS_FILE_PATH = stocks_file_path
 
 		# Create data engine
-		self.dataEngine = DataEngine(self.HISTORY_TO_USE, self.DATA_GRANULARITY_MINUTES, 
+		self.dataEngine = DataEngine(self.HISTORY_TO_USE, self.DATA_GRANULARITY_MINUTES,
 							self.FUTURE_BARS_FOR_TESTING,
 							self.MARKET_INDEX,
 							self.IS_TEST,
@@ -150,7 +153,7 @@ class Eiten:
 			# Add returns to vector
 			predicted_return_vectors.append(future_expected_returns) # Assuming that future returns are similar to past returns
 
-		# Convert to numpy arrays for one liner calculations			
+		# Convert to numpy arrays for one liner calculations
 		predicted_return_vectors = np.array(predicted_return_vectors)
 		returns_matrix = np.array(returns_matrix)
 		returns_matrix_percentages = np.array(returns_matrix_percentages)
@@ -203,7 +206,7 @@ class Eiten:
 		self.print_and_plot_portfolio_weights(mvp_portfolio_weights_dictionary, 'Minimum Variance Portfolio (MVP)', plot_num = 2)
 		self.print_and_plot_portfolio_weights(msr_portfolio_weights_dictionary, 'Maximum Sharpe Portfolio (MSR)', plot_num = 3)
 		self.print_and_plot_portfolio_weights(ga_portfolio_weights_dictionary, 'Genetic Algo (GA)', plot_num = 4)
-		self.draw_plot()
+		self.draw_plot("output/weights.png")
 
 		# Back test
 		print("\n*& Backtesting the portfolios...")
@@ -211,7 +214,7 @@ class Eiten:
 		self.backTester.back_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 		self.backTester.back_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 		self.backTester.back_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-		self.draw_plot()
+		self.draw_plot("output/backtest.png")
 
 		if self.IS_TEST:
 			print("\n#^ Future testing the portfolios...")
@@ -220,7 +223,7 @@ class Eiten:
 			self.backTester.future_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 			self.backTester.future_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 			self.backTester.future_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-			self.draw_plot()
+			self.draw_plot("output/future_tests.png")
 
 		# Simulation
 		print("\n+$ Simulating future prices using monte carlo...")
@@ -228,16 +231,19 @@ class Eiten:
 		self.simulator.simulate_portfolio(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Minimum Variance Portfolio (MVP)')
 		self.simulator.simulate_portfolio(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Maximum Sharpe Portfolio (MSR)')
 		self.simulator.simulate_portfolio(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary, future_prices_market, self.IS_TEST, market_chart = False, strategy_name = 'Genetic Algo (GA)')
-		self.draw_plot()
+		self.draw_plot("output/monte_carlo.png")
 
-	def draw_plot(self):
+	def draw_plot(self, filename="output/graph.png"):
 		"""
 		Draw plots
 		"""
-		plt.tight_layout()
 		plt.grid()
 		plt.legend(fontsize = 14)
-		plt.show()
+		if self.SAVE_PLOT:
+			plt.savefig(filename)
+		else:
+			plt.tight_layout()
+			plt.show()
 
 	def print_and_plot_portfolio_weights(self, weights_dictionary, strategy, plot_num):
 		print("\n-------- Weights for %s --------" % strategy)
@@ -264,4 +270,4 @@ argChecker = ArgChecker()
 eiten = Eiten()
 eiten.run_strategies()
 
-	
+
