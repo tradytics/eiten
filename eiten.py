@@ -1,17 +1,28 @@
-import math
 import numpy as np
 import matplotlib.pyplot as plt
-
+import json
 # Load our modules
 from data_loader import DataEngine
 from simulator import MontoCarloSimulator
 from backtester import BackTester
 from strategy_manager import StrategyManager
+import os
+
+
+class _dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 class Eiten:
-    def __init__(self, args):
-        
+    def __init__(self, args=None):
+        if args is None:
+            arg_types = {"str": str, "int": int, "bool": bool}
+            x = json.load(open("commands.json", "r"))
+            args = _dotdict(
+                {i["comm"][2:]: arg_types[i["type"]](i["default"]) for i in x})
 
         print("\n--* Eiten has been initialized...")
         self.args = args
@@ -57,7 +68,8 @@ class Eiten:
             total_data = close_prices.shape[0]
 
             # Expected returns in future. We can either use historical returns as future returns on try to simulate future returns and take the mean. For simulation, you can modify the functions in simulator to use here.
-            future_expected_returns = np.mean((self.price_delta(close_prices)) / (total_data - i))  # More focus on recent returns
+            future_expected_returns = np.mean((self.price_delta(
+                close_prices)) / (total_data - i))  # More focus on recent returns
 
             # Add to matrices
             returns_matrix.append(log_returns)
@@ -132,6 +144,10 @@ class Eiten:
             msr_portfolio_weights_dictionary, 'Maximum Sharpe Portfolio (MSR)', plot_num=3)
         self.print_and_plot_portfolio_weights(
             ga_portfolio_weights_dictionary, 'Genetic Algo (GA)', plot_num=4)
+        import os
+        if not os.path.exists('output'):
+            os.makedirs('output')
+
         self.draw_plot("output/weights.png")
 
         # Back test
@@ -240,18 +256,24 @@ class Eiten:
 
         plt.grid()
         plt.legend(fontsize=14)
-        if self.args.save_plot:
-            plt.savefig(filename)
-        else:
-            plt.tight_layout()
-            plt.show()
+
+        # if self.args.save_plot:
+        #     plt.savefig(filename)
+        #     print("UEPOOOOOOO!!")
+        # else:
+        plt.tight_layout()
+        plt.show()
+        plt.clf()
+        plt.cla()
+        plt.close()
+        # print("UEPA!!")
 
     def print_and_plot_portfolio_weights(self, weights_dictionary: dict, strategy, plot_num: int) -> None:
         plt.style.use('seaborn-white')
         plt.rc('grid', linestyle="dotted", color='#a0a0a0')
         plt.rcParams['axes.edgecolor'] = "#04383F"
         plt.rcParams['figure.figsize'] = (12, 6)
-        
+
         print("\n-------- Weights for %s --------" % strategy)
         symbols = list(sorted(weights_dictionary.keys()))
         symbol_weights = []
