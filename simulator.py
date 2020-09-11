@@ -55,7 +55,6 @@ class MontoCarloSimulator:
         plt.ylabel("Cumulative Percentage Return", fontsize=14)
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
-        plt.show()
 
     def draw_market_performance_chart(self, actual_returns, strategy_name):
         plt.style.use('seaborn-white')
@@ -79,14 +78,12 @@ class MontoCarloSimulator:
         plt.ylabel("Cumulative Percentage Return", fontsize=14)
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
-        plt.show()
 
     def simulate_portfolio(self, symbol_names, portfolio_weights_dictionary, portfolio_data_dictionary, future_prices_market, test_or_predict, market_chart, strategy_name, simulation_timesteps=25):
         """
         Simulate portfolio returns in the future
         """
         returns_matrix = []
-        actual_returns_matrix = []
 
         # Iterate over each symbol to get their returns
         for symbol in symbol_names:
