@@ -11,7 +11,10 @@ from strategy_manager import StrategyManager
 
 class Eiten:
     def __init__(self, args):
-        
+        plt.style.use('seaborn-white')
+        plt.rc('grid', linestyle="dotted", color='#a0a0a0')
+        plt.rcParams['axes.edgecolor'] = "#04383F"
+        plt.rcParams['figure.figsize'] = (12, 6)
 
         print("\n--* Eiten has been initialized...")
         self.args = args
@@ -33,11 +36,11 @@ class Eiten:
 
         print('\n')
 
-    def price_delta(self, prices):
+    def calculate_percentage_change(self, old, new):
         """
         Calculate percentage change
         """
-        return ((prices - prices.shift()) * 100 / prices.shift())[1:]
+        return ((new - old) * 100) / old
 
     def create_returns(self, historical_price_info):
         """
@@ -48,16 +51,18 @@ class Eiten:
         returns_matrix = []
         returns_matrix_percentages = []
         predicted_return_vectors = []
-
         for i in range(0, len(historical_price_info)):
-            close_prices = historical_price_info[i]["Close"]
-            log_returns = np.log((close_prices / close_prices.shift())[1:])
-            percentage_returns = self.price_delta(close_prices)
+            close_prices = list(historical_price_info[i]["Close"])
+            log_returns = [math.log(close_prices[i] / close_prices[i - 1])
+                           for i in range(1, len(close_prices))]
+            percentage_returns = [self.calculate_percentage_change(
+                close_prices[i - 1], close_prices[i]) for i in range(1, len(close_prices))]
 
-            total_data = close_prices.shape[0]
+            total_data = len(close_prices)
 
             # Expected returns in future. We can either use historical returns as future returns on try to simulate future returns and take the mean. For simulation, you can modify the functions in simulator to use here.
-            future_expected_returns = np.mean((self.price_delta(close_prices)) / (total_data - i))  # More focus on recent returns
+            future_expected_returns = np.mean([(self.calculate_percentage_change(close_prices[i - 1], close_prices[i])) / (
+                total_data - i) for i in range(1, len(close_prices))])  # More focus on recent returns
 
             # Add to matrices
             returns_matrix.append(log_returns)
@@ -87,8 +92,8 @@ class Eiten:
         historical_price_info, future_prices = [], []
         for symbol in symbol_names:
             historical_price_info.append(
-                self.data_dictionary[symbol]["historical"])
-            future_prices.append(self.data_dictionary[symbol]["future"])
+                self.data_dictionary[symbol]["historical_prices"])
+            future_prices.append(self.data_dictionary[symbol]["future_prices"])
 
         # Get return matrices and vectors
         predicted_return_vectors, returns_matrix, returns_matrix_percentages = self.create_returns(
@@ -233,10 +238,6 @@ class Eiten:
         Draw plots
         """
         # Styling for plots
-        plt.style.use('seaborn-white')
-        plt.rc('grid', linestyle="dotted", color='#a0a0a0')
-        plt.rcParams['axes.edgecolor'] = "#04383F"
-        plt.rcParams['figure.figsize'] = (12, 6)
 
         plt.grid()
         plt.legend(fontsize=14)
@@ -247,11 +248,6 @@ class Eiten:
             plt.show()
 
     def print_and_plot_portfolio_weights(self, weights_dictionary: dict, strategy, plot_num: int) -> None:
-        plt.style.use('seaborn-white')
-        plt.rc('grid', linestyle="dotted", color='#a0a0a0')
-        plt.rcParams['axes.edgecolor'] = "#04383F"
-        plt.rcParams['figure.figsize'] = (12, 6)
-        
         print("\n-------- Weights for %s --------" % strategy)
         symbols = list(sorted(weights_dictionary.keys()))
         symbol_weights = []
