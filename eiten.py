@@ -18,24 +18,9 @@ class Eiten:
 
         print("\n--* Eiten has been initialized...")
         self.args = args
-        self.SAVE_PLOT = args.save_plot
-        self.HISTORY_TO_USE = args.history_to_use
-        self.DATA_GRANULARITY_MINUTES = args.data_granularity_minutes
-        self.FUTURE_BARS_FOR_TESTING = args.future_bars
-        self.APPLY_NOISE_FILTERING = args.apply_noise_filtering
-        self.IS_LONG_ONLY_PORTFOLIO = args.only_long
-        self.MARKET_INDEX = args.market_index
-        self.IS_TEST = args.is_test
-        self.EIGEN_PORTFOLIO_NUMBER = args.eigen_portfolio_number
-        self.STOCKS_FILE_PATH = args.stocks_file_path
 
         # Create data engine
-        self.dataEngine = DataEngine(self.HISTORY_TO_USE,
-                                     self.DATA_GRANULARITY_MINUTES,
-                                     self.FUTURE_BARS_FOR_TESTING,
-                                     self.MARKET_INDEX,
-                                     self.IS_TEST,
-                                     self.STOCKS_FILE_PATH)
+        self.dataEngine = DataEngine(args)
 
         # Monto carlo simulator
         self.simulator = MontoCarloSimulator()
@@ -126,7 +111,7 @@ class Eiten:
         covariance_matrix = np.cov(returns_matrix)
 
         # Use random matrix theory to filter out the noisy eigen values
-        if self.APPLY_NOISE_FILTERING:
+        if self.args.apply_noise_filtering:
             print(
                 "\n** Applying random matrix theory to filter out noise in the covariance matrix...\n")
             covariance_matrix = self.strategyManager.random_matrix_theory_based_cov(
@@ -134,7 +119,7 @@ class Eiten:
 
         # Get weights for the portfolio
         eigen_portfolio_weights_dictionary = self.strategyManager.calculate_eigen_portfolio(
-            symbol_names, covariance_matrix, self.EIGEN_PORTFOLIO_NUMBER)
+            symbol_names, covariance_matrix, self.args.eigen_portfolio_number)
         mvp_portfolio_weights_dictionary = self.strategyManager.calculate_minimum_variance_portfolio(
             symbol_names, covariance_matrix)
         msr_portfolio_weights_dictionary = self.strategyManager.calculate_maximum_sharpe_portfolio(
@@ -156,27 +141,64 @@ class Eiten:
 
         # Back test
         print("\n*& Backtesting the portfolios...")
-        self.backTester.back_test(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary,
-                                  historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart=True, strategy_name='Eigen Portfolio')
-        self.backTester.back_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, historical_price_market,
-                                  self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Minimum Variance Portfolio (MVP)')
-        self.backTester.back_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, historical_price_market,
-                                  self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Maximum Sharpe Portfolio (MSR)')
-        self.backTester.back_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary,
-                                  historical_price_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Genetic Algo (GA)')
+        self.backTester.back_test(symbol_names, eigen_portfolio_weights_dictionary,
+                                  self.data_dictionary,
+                                  historical_price_market,
+                                  self.args.only_long,
+                                  market_chart=True,
+                                  strategy_name='Eigen Portfolio')
+        self.backTester.back_test(symbol_names,
+                                  mvp_portfolio_weights_dictionary,
+                                  self.data_dictionary, historical_price_market,
+                                  self.args.only_long,
+                                  market_chart=False,
+                                  strategy_name='Minimum Variance Portfolio (MVP)')
+        self.backTester.back_test(symbol_names, msr_portfolio_weights_dictionary,
+                                  self.data_dictionary,
+                                  historical_price_market,
+                                  self.args.only_long,
+                                  market_chart=False,
+                                  strategy_name='Maximum Sharpe Portfolio (MSR)')
+        self.backTester.back_test(symbol_names,
+                                  ga_portfolio_weights_dictionary,
+                                  self.data_dictionary,
+                                  historical_price_market,
+                                  self.args.only_long,
+                                  market_chart=False,
+                                  strategy_name='Genetic Algo (GA)')
         self.draw_plot("output/backtest.png")
 
-        if self.IS_TEST:
+        if self.args.is_test:
             print("\n#^ Future testing the portfolios...")
             # Future test
-            self.backTester.future_test(symbol_names, eigen_portfolio_weights_dictionary, self.data_dictionary,
-                                        future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart=True, strategy_name='Eigen Portfolio')
-            self.backTester.future_test(symbol_names, mvp_portfolio_weights_dictionary, self.data_dictionary, future_prices_market,
-                                        self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Minimum Variance Portfolio (MVP)')
-            self.backTester.future_test(symbol_names, msr_portfolio_weights_dictionary, self.data_dictionary, future_prices_market,
-                                        self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Maximum Sharpe Portfolio (MSR)')
-            self.backTester.future_test(symbol_names, ga_portfolio_weights_dictionary, self.data_dictionary,
-                                        future_prices_market, self.IS_LONG_ONLY_PORTFOLIO, market_chart=False, strategy_name='Genetic Algo (GA)')
+            self.backTester.future_test(symbol_names,
+                                        eigen_portfolio_weights_dictionary,
+                                        self.data_dictionary,
+                                        future_prices_market,
+                                        self.args.only_long,
+                                        market_chart=True,
+                                        strategy_name='Eigen Portfolio')
+            self.backTester.future_test(symbol_names,
+                                        mvp_portfolio_weights_dictionary,
+                                        self.data_dictionary,
+                                        future_prices_market,
+                                        self.args.only_long,
+                                        market_chart=False,
+                                        strategy_name='Minimum Variance Portfolio (MVP)')
+            self.backTester.future_test(symbol_names,
+                                        msr_portfolio_weights_dictionary,
+                                        self.data_dictionary,
+                                        future_prices_market,
+                                        self.args.only_long,
+                                        market_chart=False,
+                                        strategy_name='Maximum Sharpe Portfolio (MSR)')
+            self.backTester.future_test(symbol_names,
+                                        ga_portfolio_weights_dictionary,
+                                        self.data_dictionary,
+                                        future_prices_market,
+                                        self.args.only_long,
+                                        market_chart=False,
+                                        strategy_name='Genetic Algo (GA)')
             self.draw_plot("output/future_tests.png")
 
         # Simulation
@@ -185,28 +207,28 @@ class Eiten:
                                           eigen_portfolio_weights_dictionary,
                                           self.data_dictionary,
                                           future_prices_market,
-                                          self.IS_TEST,
+                                          self.args.is_test,
                                           market_chart=True,
                                           strategy_name='Eigen Portfolio')
         self.simulator.simulate_portfolio(symbol_names,
                                           eigen_portfolio_weights_dictionary,
                                           self.data_dictionary,
                                           future_prices_market,
-                                          self.IS_TEST,
+                                          self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Minimum Variance Portfolio (MVP)')
         self.simulator.simulate_portfolio(symbol_names,
                                           eigen_portfolio_weights_dictionary,
                                           self.data_dictionary,
                                           future_prices_market,
-                                          self.IS_TEST,
+                                          self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Maximum Sharpe Portfolio (MSR)')
         self.simulator.simulate_portfolio(symbol_names,
                                           ga_portfolio_weights_dictionary,
                                           self.data_dictionary,
                                           future_prices_market,
-                                          self.IS_TEST,
+                                          self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Genetic Algo (GA)')
         self.draw_plot("output/monte_carlo.png")
@@ -219,13 +241,13 @@ class Eiten:
 
         plt.grid()
         plt.legend(fontsize=14)
-        if self.SAVE_PLOT:
+        if self.args.save_plot:
             plt.savefig(filename)
         else:
             plt.tight_layout()
             plt.show()
 
-    def print_and_plot_portfolio_weights(self, weights_dictionary:dict, strategy, plot_num:int) -> None:
+    def print_and_plot_portfolio_weights(self, weights_dictionary: dict, strategy, plot_num: int) -> None:
         print("\n-------- Weights for %s --------" % strategy)
         symbols = list(sorted(weights_dictionary.keys()))
         symbol_weights = []

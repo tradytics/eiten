@@ -13,7 +13,6 @@ Sample run:
 python portfolio_manager.py --is_test 1 --future_bars 90 --data_granularity_minutes 3600 --history_to_use all --apply_noise_filtering 1 --market_index QQQ --only_long 1 --eigen_portfolio_number 3
 """
 
-
 def main():
 
     argParser = argparse.ArgumentParser()
