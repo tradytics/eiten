@@ -1,7 +1,6 @@
 # Basic libraries
 import os
 import collections
-import pandas as pd
 import yfinance as yf
 from tqdm import tqdm
 import warnings
