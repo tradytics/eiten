@@ -1,0 +1,79 @@
+[{
+        "comm": "--history_to_use",
+        "type": "str",
+        "default": "all",
+        "help": "How many bars of 1 hour do you want to use for the anomaly detection model. Either an integer or all"
+    },
+    {
+        "comm": "--is_load_from_dictionary",
+        "type": "int",
+        "default": "0",
+        "help": "Whether to load data from dictionary or get it from yahoo finance."
+    },
+    {
+        "comm": "--data_dictionary_path",
+        "type": "str",
+        "default": "dictionaries/data_dictionary.npy",
+        "help": "Data dictionary path."
+    },
+    {
+        "comm": "--is_save_dictionary",
+        "type": "int",
+        "default": "1",
+        "help": "Whether to save data in a dictionary."
+    },
+    {
+        "comm": "--data_granularity_minutes",
+        "type": "int",
+        "default": "15",
+        "help": "Minute level data granularity that you want to use. Default is 60 minute bars."
+    },
+    {
+        "comm": "--is_test",
+        "type": "int",
+        "default": "1",
+        "help": "Whether to test the tool or just predict for future. When testing you should set the future_bars to larger than 1."
+    },
+    {
+        "comm": "--future_bars",
+        "type": "int",
+        "default": "30",
+        "help": "How many bars to keep for testing purposes."
+    },
+    {
+        "comm": "--apply_noise_filtering",
+        "type": "int",
+        "default": "1",
+        "help": "Whether to apply the random matrix theory to filter out the eigen values."
+    },
+    {
+        "comm": "--only_long",
+        "type": "int",
+        "default": "1",
+        "help": "Whether to only long the stocks or do both long and short."
+    },
+    {
+        "comm": "--market_index",
+        "type": "str",
+        "default": "SPY",
+        "help": "Which index to use for comparisons."
+    },
+    {
+        "comm": "--eigen_portfolio_number",
+        "type": "int",
+        "default": "2",
+        "help": "Which eigen portfolio to choose. By default the 2nd one is choosen as it gives the most risk and reward."
+    },
+    {
+        "comm": "--stocks_file_path",
+        "type": "str",
+        "default": "stocks/stocks.txt",
+        "help": "Stocks file that contains the list of stocks you want to build your portfolio with."
+    },
+    {
+        "comm": "--save_plot",
+        "type": "bool",
+        "default": "False",
+        "help": "Save plot instead of rendering it immediately."
+    }
+]
