@@ -42,15 +42,14 @@ class DataEngine:
 
     def get_most_frequent_key(self, input_list):
         counter = collections.Counter(input_list)
-        counter_keys = list(counter.keys())
-        frequent_key = counter_keys[0]
-        return frequent_key
+        return list(counter.keys())[0]
 
     def get_data(self, symbol):
         """
         Get stock data from yahoo finance.
         """
-
+        future_prices = None
+        historical_prices = None
         # Find period
         if self.args.data_granularity_minutes == 1:
             period = "7d"
@@ -73,14 +72,11 @@ class DataEngine:
                 progress=False)
             stock_prices = stock_prices.reset_index()
             try:
-                stock_prices = stock_prices[[
-                    'Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                stock_prices = stock_prices.drop(columns=["Adj Close"])
             except Exception as e:
-                stock_prices = stock_prices[[
-                    'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-                print(e)
+                print("Exception", e)
 
-            data_length = len(stock_prices.values.tolist())
+            data_length = stock_prices.shape[0]
             self.stock_data_length.append(data_length)
 
             # After getting some data, ignore partial data from yfinance
@@ -90,44 +86,29 @@ class DataEngine:
                     self.stock_data_length)
                 if (data_length != most_frequent_key and
                     data_length != self.args.history_to_use and
-                        symbol != self.args.market_index):  # Need SPY at any cost
+                        symbol != self.args.market_index):  # Needs index
                     return [], [], True
 
-            if self.args.is_test == 1:
-                stock_prices_list = stock_prices.values.tolist()
-                if self.args.history_to_use == "all":
-                    # For some reason, yfinance gives some 0 values in the first index
-                    stock_prices_list = stock_prices_list[1:]
-                else:
-                    stock_prices_list = stock_prices_list[-self.args.history_to_use:]
-
-                future_prices_list = stock_prices_list[-(
-                    self.args.future_bars + 1):]
-                historical_prices = stock_prices_list[:-
-                                                      self.args.future_bars]
-                historical_prices = pd.DataFrame(historical_prices)
-                historical_prices.columns = [
-                    'Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']
+            if self.args.history_to_use == "all":
+                # For some reason, yfinance gives some 0
+                # values in the first index
+                stock_prices = stock_prices.iloc[1:]
             else:
-                # No testing
-                stock_prices_list = stock_prices.values.tolist()
-                if self.args.history_to_use == "all":
-                    # For some reason, yfinance gives some 0 values in the first index
-                    stock_prices_list = stock_prices_list[1:]
-                else:
-                    stock_prices_list = stock_prices_list[-self.args.history_to_use:]
-                historical_prices = pd.DataFrame(stock_prices_list)
-                historical_prices.columns = [
-                    'Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']
-                future_prices_list = []
+                stock_prices = stock_prices.iloc[-self.args.history_to_use:]
 
-            if len(stock_prices.values.tolist()) == 0:
+            if self.args.is_test == 1:
+                future_prices = stock_prices.iloc[-self.args.future_bars:]
+                historical_prices = stock_prices.iloc[:-self.args.future_bars]
+            else:
+                historical_prices = stock_prices
+
+            if stock_prices.shape[0] == 0:
                 return [], [], True
         except Exception as e:
-            print(e)
+            print("Exception", e)
             return [], [], True
 
-        return historical_prices, future_prices_list, False
+        return historical_prices, future_prices, False
 
     def get_market_index_price(self):
         """
@@ -147,8 +128,8 @@ class DataEngine:
 
         print("Loading data for all stocks...")
         symbol_names = []
-        historical_price_info = []
-        future_price_info = []
+        historical_price = []
+        future_price = []
 
         # Any stock with very low volatility is ignored.
         # You can change this line to address that.
@@ -160,8 +141,8 @@ class DataEngine:
                 if not not_found:
                     # Add to lists
                     symbol_names.append(symbol)
-                    historical_price_info.append(stock_price_data)
-                    future_price_info.append(future_prices)
+                    historical_price.append(stock_price_data)
+                    future_price.append(future_prices)
             except Exception as e:
                 print("Exception", e)
                 continue
@@ -169,29 +150,31 @@ class DataEngine:
         # Sometimes, there are some errors in feature generation or price
         # extraction, let us remove that stuff
         historical_price_info, future_price_info, symbol_names = self.remove_bad_data(
-            historical_price_info, future_price_info, symbol_names)
+            historical_price, future_price, symbol_names)
         for i in range(0, len(symbol_names)):
             self.data_dictionary[symbol_names[i]] = {
-                "historical_prices": historical_price_info[i],
-                "future_prices": future_price_info[i]}
+                "historical": historical_price_info[i],
+                "future": future_price_info[i]}
 
         return self.data_dictionary
 
-    def remove_bad_data(self, historical_price_info, future_price_info, symbol_names):
+    def remove_bad_data(self, historical_price, future_price, symbol_names):
         """
         Remove bad data i.e data that had some errors while scraping or feature generation
+
+        *** This can be much more improved with dicts and filter function.
         """
 
         length_dictionary = collections.Counter(
-            [len(item.values.tolist()) for item in historical_price_info])
+            [i.shape[0] for i in historical_price])
         length_dictionary = list(length_dictionary.keys())
         most_common_length = length_dictionary[0]
 
-        _, filtered_historical_price, filtered_future_prices, filtered_symbols = [], [], [], []
-        for i in range(0, len(future_price_info)):
-            if len(historical_price_info[i].values.tolist()) == most_common_length:
+        filtered_historical_price, filtered_future_prices, filtered_symbols = [], [], [], 
+        for i in range(len(future_price)):
+            if historical_price[i].shape[0] == most_common_length:
                 filtered_symbols.append(symbol_names[i])
-                filtered_historical_price.append(historical_price_info[i])
-                filtered_future_prices.append(future_price_info[i])
+                filtered_historical_price.append(historical_price[i])
+                filtered_future_prices.append(future_price[i])
 
         return filtered_historical_price, filtered_future_prices, filtered_symbols
