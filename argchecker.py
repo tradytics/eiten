@@ -19,3 +19,7 @@ class ArgChecker:
 
         assert not(args.history_to_use != "all" and int(args.history_to_use_int) <
                    args.future_bars), "It is a good idea to use more history and less future bars. Please change these two values and try again.\nExiting now..."
+
+        args.market_index = str(args.market_index).upper()
+        if args.history_to_use != "all":
+            args.history_to_use = int(args.history_to_use)
