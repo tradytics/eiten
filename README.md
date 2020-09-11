@@ -13,7 +13,7 @@ If you want to discuss these tools in length and find new tools for better and s
 | eiten | Main folder.
 | &boxur;&nbsp; figures | Figures for this github repositories.
 | &boxur;&nbsp; stocks | Folder to keep your stock lists that you want to use to create your portfolios.
-| &boxur;&nbsp; strategies | A bunch if strategies implemented in python.
+| &boxur;&nbsp; strategies | A bunch of strategies implemented in python.
 | backtester.py | Backtesting module that both backtests and forward tests all portfolios.
 | data_loader.py | Module for loading data from yahoo finance.
 | portfolio_manager.py | Main file that takes in a bunch of arguments and generates several portfolios for you.
@@ -46,7 +46,7 @@ This command will use last 5 years of daily data excluding the last 90 days and 
 - **is_test**: The value determined if the program is going to keep some separate data for future testing. When this is enabled, the value of **future_bars** should be larger than 5.
 - **future_bars**: These are the bars that the tool will exclude during portfolio building and will forward test the portfolios on the excluded set. This is also called out of sample data.
 - **data_granularity_minutes**: How much granular data do you want to use to build your portfolios. For long term portfolios, you should use daily data but for short term, you can use hourly or minute level data. The possible values here are **3600, 60, 30, 15, 5, 1.** 3600 means daily.
-- **history_to_use**: Whether to use a specific number of historical bars or use everything that we receive from yahoo finance. For minute level data, we only receive upto one month of historical data. For daily, we receive 5 years worth of historical data. If you want to use all available data, the value should be **all** but if you want to use smaller history, you can set it to an integer value e.g **100** which will only use the last 100 bars to build the portfolios.
+- **history_to_use**: Whether to use a specific number of historical bars or use everything that we receive from yahoo finance. For minute level data, we only receive up to one month of historical data. For daily, we receive 5 years worth of historical data. If you want to use all available data, the value should be **all** but if you want to use smaller history, you can set it to an integer value e.g **100** which will only use the last 100 bars to build the portfolios.
 - **apply_noise_filtering**: This uses [random matrix theory](http://faculty.baruch.cuny.edu/jgatheral/randommatrixcovariance2008.pdf) to filter out the covariance matrix from randomness thus yielding better portfolios. A value of 1 will enable it and 0 will disable it.
 - **market_index**: Which index do you want to use to compare your portfolios. This should mostly be **SPY** but since we analyzed tech stocks, we used **QQQ**.
 - **only_long**: Whether to use long only portfolio or enable short selling as well. Long only portfolios have shown to have better performance using algorithmic techniques.
