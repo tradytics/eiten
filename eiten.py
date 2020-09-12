@@ -5,7 +5,7 @@ import json
 
 # Load our modules
 from data_loader import DataEngine
-from simulator import MontoCarloSimulator
+from simulator import MonteCarloSimulator
 from backtester import BackTester
 from utils import random_matrix_theory_based_cov
 from utils import dotdict
@@ -22,15 +22,6 @@ class Eiten:
 
         print("\n--* Eiten has been initialized...")
         self.args = args
-
-        # Create data engine
-        self.dataEngine = DataEngine(args)
-
-        # Monte carlo simulator
-        self.simulator = MontoCarloSimulator()
-
-        # Back tester
-        self.backTester = BackTester()
 
         # Data dictionary
         self.data_dict = {}  # {"market": args.market_index}
@@ -83,8 +74,9 @@ class Eiten:
         """
         # Gather data for all stocks in a dictionary format
         # Dictionary keys will be -> historical, future
-        self.data_dict = self.dataEngine.collect_data_for_all_tickers()
-        p, f = self.dataEngine.get_data(self.args.market_index)
+        de = DataEngine()
+        self.data_dict = de.collect_data_for_all_tickers()
+        p, f = de.get_data(self.args.market_index)
         self.market_data["historical"], self.market_data["future"] = p, f
         # Get return matrices and vectors
         return self.data_dict
@@ -130,15 +122,14 @@ class Eiten:
         # Back test
         print("\n*& Backtesting the portfolios...")
 
+        df_back = pd.Dataframe(columns=list(self.portfolios.keys()))
         for i in self.portfolios:
-
-            self.backTester.back_test(self.portfolios[i],
-                                      self.data_dict,
-                                      self.market_data,
-                                      self.args.only_long,
-                                      market_chart=True,
-                                      strategy_name=i)
+            df_back[i] = self.backTester.get_historical_test(self.portfolios[i],
+                                                self.data_dict,
+                                                self.args.only_long)
         self.draw_plot("output/backtest.png")
+
+        return
 
         if self.args.is_test:
             print("\n#^ Future testing the portfolios...")
