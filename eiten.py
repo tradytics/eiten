@@ -273,3 +273,4 @@ class Eiten:
         plt.xlabel("Symbols", fontsize=14)
         plt.ylabel("Weight in Portfolio", fontsize=14)
         plt.title("Portfolio Weights for Different Strategies", fontsize=14)
+

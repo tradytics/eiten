@@ -157,3 +157,4 @@ class MontoCarloSimulator:
         Check if object is null
         """
         return object != object
+

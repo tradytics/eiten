@@ -67,3 +67,4 @@ class StrategyManager:
         filtered_covariance_matrix = self.strategyHelperFunctions.random_matrix_theory_based_cov(
             returns_matrix)
         return filtered_covariance_matrix
+
