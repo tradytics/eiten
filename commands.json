@@ -51,5 +51,11 @@
         "type": "str",
         "default": "stocks/stocks.txt",
         "help": "Stocks file that contains the list of stocks you want to build your portfolio with."
+    },
+    {
+        "comm": "--save_plot",
+        "type": "bool",
+        "default": "False",
+        "help": "Save plot instead of rendering it immediately."
     }
-]
+] 
