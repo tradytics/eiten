@@ -15,9 +15,9 @@ plt.rc('grid', linestyle="dotted", color='#a0a0a0')
 plt.rcParams['axes.edgecolor'] = "#04383F"
 
 
-class MontoCarloSimulator:
+class MonteCarloSimulator:
     """
-    Monto carlo simulator that calculates the historical returns distribution 
+    Monte carlo simulator that calculates the historical returns distribution 
     and uses it to predict the future returns
     """
 
