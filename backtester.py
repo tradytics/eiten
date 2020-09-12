@@ -84,7 +84,6 @@ class BackTester:
         """
 
         # Get future prices
-        print(future_price_market)
         future_price_market = [item[4] for item in list(future_price_market)]
         market_returns = [self.calculate_percentage_change(future_price_market[i - 1], future_price_market[i]) for i in range(1, len(future_price_market))]
         market_returns_cumulative = np.cumsum(market_returns)
