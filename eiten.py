@@ -241,11 +241,14 @@ class Eiten:
 
         plt.grid()
         plt.legend(fontsize=14)
-        if self.args.save_plot:
+        plt.tight_layout()
+        plt.show()
+        
+        """if self.args.save_plot:
             plt.savefig(filename)
         else:
             plt.tight_layout()
-            plt.show()
+            plt.show()""" # Plots were not being generated properly. Need to fix this.
 
     def print_and_plot_portfolio_weights(self, weights_dictionary: dict, strategy, plot_num: int) -> None:
         print("\n-------- Weights for %s --------" % strategy)
