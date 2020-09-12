@@ -34,7 +34,8 @@ class BackTester:
 
     def portfolio_weight_manager(self, weight, is_long_only):
         """
-        Manage portfolio weights. If portfolio is long only, set the negative weights to zero.
+        Manage portfolio weights. If portfolio is long only, 
+        set the negative weights to zero.
         """
         if is_long_only == 1:
             weight = max(weight, 0)
@@ -42,20 +43,23 @@ class BackTester:
             weight = weight
         return weight
 
-    def back_test(self, symbol_names, portfolio_weights_dictionary, portfolio_data_dictionary, historical_price_market, is_long_only, market_chart, strategy_name):
+    def back_test(self, p_weights, data, market_data, long_only: bool,
+                  market_chart: bool, strategy_name: str):
         """
-        Main backtest function. Takes in the portfolio weights and compares the portfolio returns with a market index of your choice.
+        Main backtest function. Takes in the portfolio weights and compares 
+        the portfolio returns with a market index of your choice.
         """
-
+        historical_data = market_data
         # Get market returns during the backtesting time
-        historical_prices = historical_price_market["Close"]
+        symbol_names = list(p_weights.keys())
+        historical_prices = historical_data["historical"]["Close"]
         market_returns = self.price_delta(historical_prices)
         market_returns_cumulative = np.cumsum(market_returns)
 
         # Get invidiual returns for each stock in our portfolio
         normal_returns_matrix = []
         for symbol in symbol_names:
-            symbol_historical_prices = portfolio_data_dictionary[symbol]["historical"]["Close"]
+            symbol_historical_prices = data[symbol]["historical"]["Close"]
             symbol_historical_returns = self.price_delta(
                 symbol_historical_prices)
             normal_returns_matrix.append(symbol_historical_returns)
@@ -63,7 +67,7 @@ class BackTester:
         # Get portfolio returns
         normal_returns_matrix = np.array(normal_returns_matrix).transpose()
         portfolio_weights_vector = np.array([self.portfolio_weight_manager(
-            portfolio_weights_dictionary[symbol], is_long_only) for symbol in portfolio_weights_dictionary]).transpose()
+            p_weights[symbol], long_only) for symbol in p_weights]).transpose()
         portfolio_returns = np.dot(
             normal_returns_matrix, portfolio_weights_vector)
         portfolio_returns_cumulative = np.cumsum(portfolio_returns)
@@ -85,26 +89,34 @@ class BackTester:
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
 
-    def future_test(self, symbol_names, portfolio_weights_dictionary, portfolio_data_dictionary, future_price_market, is_long_only, market_chart, strategy_name):
+    def future_test(self, p_weights, data, market_data, long_only: bool,
+                    market_chart: bool, strategy_name: str):
         """
-        Main future test function. If future data is available i.e is_test is set to 1 and future_bars set to > 0, this takes in the portfolio weights and compares the portfolio returns with a market index of your choice in the future.
+        Main future test function. If future data is available i.e is_test
+        is set to 1 and future_bars set to > 0, this takes in the portfolio
+        weights and compares the portfolio returns with a market index of1
+        your choice in the future.
         """
+        symbol_names = list(p_weights.keys())
+        #future_data = data_dict[symbol]["future"].Close
 
         # Get future prices
-        market_returns = self.price_delta(future_price_market["Close"]) 
+        future_price_market = market_data["future"].Close
+        market_returns = self.price_delta(future_price_market)
         market_returns_cumulative = np.cumsum(market_returns)
 
         # Get invidiual returns for each stock in our portfolio
         normal_returns_matrix = []
         for symbol in symbol_names:
-            symbol_historical_prices = portfolio_data_dictionary[symbol]["future"]["Close"]
-            symbol_historical_returns = self.price_delta(symbol_historical_prices)
+            symbol_historical_prices = data[symbol]["future"].Close
+            symbol_historical_returns = self.price_delta(
+                symbol_historical_prices)
             normal_returns_matrix.append(symbol_historical_returns)
 
         # Get portfolio returns
         normal_returns_matrix = np.array(normal_returns_matrix).transpose()
         portfolio_weights_vector = np.array([self.portfolio_weight_manager(
-            portfolio_weights_dictionary[symbol], is_long_only) for symbol in portfolio_weights_dictionary]).transpose()
+            p_weights[symbol], long_only) for symbol in p_weights]).transpose()
         portfolio_returns = np.dot(
             normal_returns_matrix, portfolio_weights_vector)
         portfolio_returns_cumulative = np.cumsum(portfolio_returns)

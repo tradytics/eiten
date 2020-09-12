@@ -5,114 +5,111 @@ import warnings
 import numpy as np
 warnings.filterwarnings("ignore")
 
+
 class GeneticAlgoStrategy:
-	"""
-	My own custom implementation of genetic algorithms for portfolio
-	"""
-	def __init__(self):
-		print("Genetic algo strategy has been created")
-		self.initial_genes = 100
-		self.selection_top = 25
-		self.mutation_iterations = 50
-		self.weight_update_factor = 0.1
-		self.gene_length = None
-		self.genes_in_each_iteration = 250
-		self.iterations = 50
-		self.crossover_probability = 0.05
+    """
+    My own custom implementation of genetic algorithms for portfolio
+    """
 
-	def generate_portfolio(self, symbols, return_matrix):
-		self.gene_length = len(symbols)
+    def __init__(self):
+        print("Genetic algo strategy has been created")
+        self.initial_genes = 100
+        self.selection_top = 25
+        self.mutation_iterations = 50
+        self.weight_update_factor = 0.1
+        self.gene_length = None
+        self.genes_in_each_iteration = 250
+        self.iterations = 50
+        self.crossover_probability = 0.05
 
-		# Create initial genes
-		initial_genes = self.generate_initial_genes(symbols)
+    def generate_portfolio(self, symbols, return_matrix):
+        self.gene_length = len(symbols)
 
-		for i in range(self.iterations):
-			# Select
-			top_genes = self.select(return_matrix, initial_genes)
-			#print("Iteration %d Best Sharpe Ratio: %.3f" % (i, top_genes[0][0]))
-			top_genes = [item[1] for item in top_genes]
+        # Create initial genes
+        initial_genes = self.generate_initial_genes(symbols)
 
-			# Mutate
-			mutated_genes = self.mutate(top_genes)
-			initial_genes = mutated_genes
+        for i in range(self.iterations):
+            # Select
+            top_genes = self.select(return_matrix, initial_genes)
+            # print("Iteration %d Best Sharpe Ratio: %.3f" % (i, top_genes[0][0]))
+            top_genes = [item[1] for item in top_genes]
 
-		top_genes = self.select(return_matrix, initial_genes)
-		best_gene = top_genes[0][1]
-		transposed_gene = np.array(best_gene).transpose() # Gene is a distribution of weights for different stocks
-		return_matrix_transposed = return_matrix.transpose()
-		returns = np.dot(return_matrix_transposed, transposed_gene)
-		returns_cumsum = np.cumsum(returns)
-		
-		ga_portfolio_weights = best_gene
-		ga_portfolio_weights = dict([(symbols[x], ga_portfolio_weights[x]) for x in range(0, len(ga_portfolio_weights))])
-		return ga_portfolio_weights
+            # Mutate
+            mutated_genes = self.mutate(top_genes)
+            initial_genes = mutated_genes
 
-	def generate_initial_genes(self, symbols):
-		total_symbols = len(symbols)
+        top_genes = self.select(return_matrix, initial_genes)
+        best_gene = top_genes[0][1]
+        # Gene is a distribution of weights for different stocks
+        # transposed_gene = np.array(best_gene).transpose()
+        # returns = np.dot(return_matrix, transposed_gene)
+        # returns_cumsum = np.cumsum(returns)
 
-		genes = []
-		for i in range(self.initial_genes):
-			gene = [random.uniform(-1, 1) for _ in range(0, total_symbols)]
-			genes.append(gene)
+        weights = {symbols[x]: best_gene[x] for x in range(0, len(best_gene))}
+        return weights
 
-		return genes
+    def generate_initial_genes(self, symbols):
+        return np.array(
+            [self.generate_gene() for _ in range(self.gene_length)])
 
-	def mutate(self, genes):
-		new_genes = []
+    def mutate(self, genes):
+        new_genes = []
 
-		for gene in genes: 
-			for x in range(0, self.mutation_iterations):
-				mutation = gene + (self.weight_update_factor * np.random.uniform(-1, 1, self.gene_length))
-				mutation = list(mutation)
-				new_genes.append(mutation)
+        for gene in genes:
+            for x in range(0, self.mutation_iterations):
+                mutation = gene + (self.weight_update_factor *
+                                   np.random.uniform(-1, 1, self.gene_length))
+                new_genes.append(mutation)
 
-		new_genes = genes + new_genes 
-		random.shuffle(new_genes)
-		genes_to_keep = new_genes[:self.genes_in_each_iteration] 
+        new_genes = genes + new_genes
+        np.random.shuffle(new_genes)
+        genes_to_keep = new_genes[:self.genes_in_each_iteration]
 
-		# Add crossovers
-		crossovers = self.crossover(new_genes)
-		genes_to_keep = genes_to_keep + crossovers
+        # Add crossovers
+        crossovers = self.crossover(new_genes)
+        genes_to_keep = genes_to_keep + crossovers
 
-		return genes_to_keep
+        return genes_to_keep
 
-	def select(self, return_matrix, genes):
-		genes_with_scores = []
-		for gene in genes:
-			transposed_gene = np.array(gene).transpose() # Gene is a distribution of weights for different stocks
-			return_matrix_transposed = return_matrix.transpose()
-			returns = np.dot(return_matrix_transposed, transposed_gene)
-			returns_cumsum = np.cumsum(returns)
-			
-			# Get fitness score
-			fitness = self.fitness_score(returns)
-			genes_with_scores.append([fitness, gene])
-		
-		# Sort
-		random_genes = [self.generate_a_gene() for _ in range(5)]
-		genes_with_scores = list(reversed(sorted(genes_with_scores)))
-		genes_with_scores = genes_with_scores[:self.selection_top] + random_genes
-		return genes_with_scores
+    def select(self, return_matrix, genes):
+        genes_with_scores = []
+        for gene in genes:
+            # Gene is a distribution of weights for different stocks
+            transposed_gene = gene.transpose()
+            returns = np.dot(return_matrix, transposed_gene)
+            # returns_cumsum = np.cumsum(returns)
 
-	def fitness_score(self, returns):
-		sharpe_returns = np.mean(returns) / np.std(returns)
-		return sharpe_returns
+            # Get fitness score
+            fitness = self.fitness_score(returns)
+            genes_with_scores.append([fitness, gene])
 
-	def generate_a_gene(self):
-		gene = [random.uniform(-1, 1) for _ in range(self.gene_length)]
-		return gene
+        # Sort
+        random_genes = [self.generate_gene() for _ in range(5)]
+        genes_with_scores = sorted(
+            genes_with_scores, reverse=True, key=lambda x: x[0])
+        genes_with_scores = (genes_with_scores[:self.selection_top] +
+                             random_genes)
+        return genes_with_scores
 
-	def crossover(self, population):
-		crossover_population = []
-		for z in range(0, len(population)):
-			if random.uniform(0, 1) < self.crossover_probability:
-				try:
-					random_gene_first = list(random.sample(population, 1)[0])
-					random_gene_second = list(random.sample(population, 1)[0])
-					random_split = random.randrange(1, len(random_gene_first) - 1)
-					crossover_gene = random_gene_first[:random_split] + random_gene_second[random_split:]
-					crossover_population.append(crossover_gene)
-				except Exception as e:
-					continue
+    def fitness_score(self, returns):
+        sharpe_returns = np.mean(returns) / np.std(returns)
+        return sharpe_returns
 
-		return crossover_population
+    def generate_gene(self):
+        return np.random.uniform(-1, 1, self.gene_length)
+
+    def crossover(self, population):
+        rng = np.random.default_rng()
+        crossover_population = []
+
+        population = np.array(
+            list(filter(lambda x: type(x) == np.ndarray, population)))
+        for z in range(0, len(population)):
+            if np.random.uniform(0, 1) < self.crossover_probability:
+                a, b = rng.choice(population, 2)
+                random_split = np.random.randint(1, len(a) - 1)
+                ab = np.concatenate(
+                    (a[:random_split], b[random_split:]), axis=0)
+                crossover_population.append(ab)
+
+        return crossover_population

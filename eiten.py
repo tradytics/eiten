@@ -1,6 +1,7 @@
-import math
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import json
 
 # Load our modules
 from data_loader import DataEngine
@@ -9,9 +10,20 @@ from backtester import BackTester
 from strategy_manager import StrategyManager
 
 
+class _dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 class Eiten:
-    def __init__(self, args):
-        
+    def __init__(self, args: dict = None):
+        if args is None:
+            arg_types = {"str": str, "int": int, "bool": bool}
+            x = json.load(open("commands.json", "r"))
+            args = _dotdict(
+                {i["comm"][2:]: arg_types[i["type"]](i["default"]) for i in x})
 
         print("\n--* Eiten has been initialized...")
         self.args = args
@@ -19,7 +31,7 @@ class Eiten:
         # Create data engine
         self.dataEngine = DataEngine(args)
 
-        # Monto carlo simulator
+        # Monte carlo simulator
         self.simulator = MontoCarloSimulator()
 
         # Strategy manager
@@ -29,98 +41,92 @@ class Eiten:
         self.backTester = BackTester()
 
         # Data dictionary
-        self.data_dictionary = {}
+        self.data_dict = {}  # {"market": args.market_index}
+        self.market_data = {}
 
         print('\n')
 
-    def price_delta(self, prices):
+    def _get_price_delta(self, prices: pd.DataFrame):
         """
         Calculate percentage change
         """
         return ((prices - prices.shift()) * 100 / prices.shift())[1:]
 
-    def create_returns(self, historical_price_info):
+    def _get_abstract_returns(self, f):
+        """Abstract form of getting returns
+
+        This function takes a function f as parameter and applies the function
+        to the closing prices of the current data dictionary
+
+        :param f: a function that takes a dictionary and returns some returns
+        :type f: function
+        :returns: A Pandas Dataframe of returns for each asset
+        :rtype: pd.Dataframe
         """
-        Create log return matrix, percentage return matrix, and mean return 
-        vector
-        """
+        res = pd.DataFrame(pd.DataFrame(columns=list(self.data_dict.keys())))
+        for i in self.data_dict:
+            c = self.data_dict[i]["historical"].Close
+            res[i] = f(c)
+        return res
 
-        returns_matrix = []
-        returns_matrix_percentages = []
-        predicted_return_vectors = []
+    def _get_perc_returns(self):
+        return self._get_abstract_returns(self._get_price_delta)
 
-        for i in range(0, len(historical_price_info)):
-            close_prices = historical_price_info[i]["Close"]
-            log_returns = np.log((close_prices / close_prices.shift())[1:])
-            percentage_returns = self.price_delta(close_prices)
+    def _get_log_return(self, data: pd.DataFrame) -> np.ndarray:
+        return np.log((data / data.shift())[1:])
 
-            total_data = close_prices.shape[0]
+    def _get_log_returns(self):
+        return self._get_abstract_returns(self._get_log_return)
 
-            # Expected returns in future. We can either use historical returns as future returns on try to simulate future returns and take the mean. For simulation, you can modify the functions in simulator to use here.
-            future_expected_returns = np.mean((self.price_delta(close_prices)) / (total_data - i))  # More focus on recent returns
+    def _get_predicted_return(self, data: pd.DataFrame) -> np.ndarray:
+        return np.array([np.mean(self._get_price_delta(data) /
+                                 np.array(np.arange(len(data) - 1, 0, -1)))])
 
-            # Add to matrices
-            returns_matrix.append(log_returns)
-            returns_matrix_percentages.append(percentage_returns)
-
-            # Add returns to vector
-            # Assuming that future returns are similar to past returns
-            predicted_return_vectors.append(future_expected_returns)
-
-        # Convert to numpy arrays for one liner calculations
-        predicted_return_vectors = np.array(predicted_return_vectors)
-        returns_matrix = np.array(returns_matrix)
-        returns_matrix_percentages = np.array(returns_matrix_percentages)
-
-        return predicted_return_vectors, returns_matrix, returns_matrix_percentages
+    def _get_predicted_returns(self):
+        return self._get_abstract_returns(self._get_predicted_return)
 
     def load_data(self):
         """
         Loads data needed for analysis
         """
         # Gather data for all stocks in a dictionary format
-        # Dictionary keys will be -> historical_prices, future_prices
-        self.data_dictionary = self.dataEngine.collect_data_for_all_tickers()
-
-        # Add data to lists
-        symbol_names = list(sorted(self.data_dictionary.keys()))
-        historical_price_info, future_prices = [], []
-        for symbol in symbol_names:
-            historical_price_info.append(
-                self.data_dictionary[symbol]["historical"])
-            future_prices.append(self.data_dictionary[symbol]["future"])
-
+        # Dictionary keys will be -> historical, future
+        self.data_dict = self.dataEngine.collect_data_for_all_tickers()
+        p, f = self.dataEngine.get_data(self.args.market_index)
+        self.market_data["historical"], self.market_data["future"] = p, f
         # Get return matrices and vectors
-        predicted_return_vectors, returns_matrix, returns_matrix_percentages = self.create_returns(
-            historical_price_info)
-        return historical_price_info, future_prices, symbol_names, predicted_return_vectors, returns_matrix, returns_matrix_percentages
+        return self.data_dict
 
     def run_strategies(self):
         """
         Run strategies, back and future test them, and simulate the returns.
         """
-        historical_price_info, future_prices, symbol_names, predicted_return_vectors, returns_matrix, returns_matrix_percentages = self.load_data()
-        historical_price_market, future_prices_market = self.dataEngine.get_market_index_price()
+        self.load_data()
 
         # Calculate covariance matrix
-        covariance_matrix = np.cov(returns_matrix)
+        log_returns = self._get_log_returns()
+        cov_matrix = log_returns.cov()
 
         # Use random matrix theory to filter out the noisy eigen values
         if self.args.apply_noise_filtering:
             print(
                 "\n** Applying random matrix theory to filter out noise in the covariance matrix...\n")
-            covariance_matrix = self.strategyManager.random_matrix_theory_based_cov(
-                returns_matrix)
+            cov_matrix = self.strategyManager.random_matrix_theory_based_cov(
+                log_returns)
+
+        symbol_names = list(self.data_dict.keys())
+        pred_returns = self._get_predicted_returns()
+        perc_returns = self._get_perc_returns()
 
         # Get weights for the portfolio
         eigen_portfolio_weights_dictionary = self.strategyManager.calculate_eigen_portfolio(
-            symbol_names, covariance_matrix, self.args.eigen_portfolio_number)
+            cov_matrix, self.args.eigen_portfolio_number)
         mvp_portfolio_weights_dictionary = self.strategyManager.calculate_minimum_variance_portfolio(
-            symbol_names, covariance_matrix)
+            symbol_names, cov_matrix)
         msr_portfolio_weights_dictionary = self.strategyManager.calculate_maximum_sharpe_portfolio(
-            symbol_names, covariance_matrix, predicted_return_vectors)
+            cov_matrix, pred_returns.T)
         ga_portfolio_weights_dictionary = self.strategyManager.calculate_genetic_algo_portfolio(
-            symbol_names, returns_matrix_percentages)
+            symbol_names, perc_returns)
 
         # Print weights
         print("\n*% Printing portfolio weights...")
@@ -136,28 +142,31 @@ class Eiten:
 
         # Back test
         print("\n*& Backtesting the portfolios...")
-        self.backTester.back_test(symbol_names, eigen_portfolio_weights_dictionary,
-                                  self.data_dictionary,
-                                  historical_price_market,
+
+        self.backTester.back_test(eigen_portfolio_weights_dictionary,
+                                  self.data_dict,
+                                  self.market_data,
                                   self.args.only_long,
                                   market_chart=True,
                                   strategy_name='Eigen Portfolio')
-        self.backTester.back_test(symbol_names,
-                                  mvp_portfolio_weights_dictionary,
-                                  self.data_dictionary, historical_price_market,
-                                  self.args.only_long,
-                                  market_chart=False,
-                                  strategy_name='Minimum Variance Portfolio (MVP)')
-        self.backTester.back_test(symbol_names, msr_portfolio_weights_dictionary,
-                                  self.data_dictionary,
-                                  historical_price_market,
+
+        self.backTester.back_test(
+            mvp_portfolio_weights_dictionary,
+            self.data_dict,
+            self.market_data,
+            self.args.only_long,
+            market_chart=False,
+            strategy_name='Minimum Variance Portfolio (MVP)')
+
+        self.backTester.back_test(msr_portfolio_weights_dictionary,
+                                  self.data_dict,
+                                  self.market_data,
                                   self.args.only_long,
                                   market_chart=False,
                                   strategy_name='Maximum Sharpe Portfolio (MSR)')
-        self.backTester.back_test(symbol_names,
-                                  ga_portfolio_weights_dictionary,
-                                  self.data_dictionary,
-                                  historical_price_market,
+        self.backTester.back_test(ga_portfolio_weights_dictionary,
+                                  self.data_dict,
+                                  self.market_data,
                                   self.args.only_long,
                                   market_chart=False,
                                   strategy_name='Genetic Algo (GA)')
@@ -166,31 +175,28 @@ class Eiten:
         if self.args.is_test:
             print("\n#^ Future testing the portfolios...")
             # Future test
-            self.backTester.future_test(symbol_names,
-                                        eigen_portfolio_weights_dictionary,
-                                        self.data_dictionary,
-                                        future_prices_market,
+            self.backTester.future_test(eigen_portfolio_weights_dictionary,
+                                        self.data_dict,
+                                        self.market_data,
                                         self.args.only_long,
                                         market_chart=True,
                                         strategy_name='Eigen Portfolio')
-            self.backTester.future_test(symbol_names,
-                                        mvp_portfolio_weights_dictionary,
-                                        self.data_dictionary,
-                                        future_prices_market,
+            self.backTester.future_test(mvp_portfolio_weights_dictionary,
+                                        self.data_dict,
+                                        self.market_data,
                                         self.args.only_long,
                                         market_chart=False,
                                         strategy_name='Minimum Variance Portfolio (MVP)')
-            self.backTester.future_test(symbol_names,
-                                        msr_portfolio_weights_dictionary,
-                                        self.data_dictionary,
-                                        future_prices_market,
+
+            self.backTester.future_test(msr_portfolio_weights_dictionary,
+                                        self.data_dict,
+                                        self.market_data,
                                         self.args.only_long,
                                         market_chart=False,
                                         strategy_name='Maximum Sharpe Portfolio (MSR)')
-            self.backTester.future_test(symbol_names,
-                                        ga_portfolio_weights_dictionary,
-                                        self.data_dictionary,
-                                        future_prices_market,
+            self.backTester.future_test(ga_portfolio_weights_dictionary,
+                                        self.data_dict,
+                                        self.market_data,
                                         self.args.only_long,
                                         market_chart=False,
                                         strategy_name='Genetic Algo (GA)')
@@ -198,34 +204,31 @@ class Eiten:
 
         # Simulation
         print("\n+$ Simulating future prices using monte carlo...")
-        self.simulator.simulate_portfolio(symbol_names,
-                                          eigen_portfolio_weights_dictionary,
-                                          self.data_dictionary,
-                                          future_prices_market,
+        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
+                                          self.data_dict,
+                                          self.market_data,
                                           self.args.is_test,
                                           market_chart=True,
                                           strategy_name='Eigen Portfolio')
-        self.simulator.simulate_portfolio(symbol_names,
-                                          eigen_portfolio_weights_dictionary,
-                                          self.data_dictionary,
-                                          future_prices_market,
+        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
+                                          self.data_dict,
+                                          self.market_data,
                                           self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Minimum Variance Portfolio (MVP)')
-        self.simulator.simulate_portfolio(symbol_names,
-                                          eigen_portfolio_weights_dictionary,
-                                          self.data_dictionary,
-                                          future_prices_market,
+        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
+                                          self.data_dict,
+                                          self.market_data,
                                           self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Maximum Sharpe Portfolio (MSR)')
-        self.simulator.simulate_portfolio(symbol_names,
-                                          ga_portfolio_weights_dictionary,
-                                          self.data_dictionary,
-                                          future_prices_market,
+        self.simulator.simulate_portfolio(ga_portfolio_weights_dictionary,
+                                          self.data_dict,
+                                          self.market_data,
                                           self.args.is_test,
                                           market_chart=False,
                                           strategy_name='Genetic Algo (GA)')
+
         self.draw_plot("output/monte_carlo.png")
 
     def draw_plot(self, filename="output/graph.png"):
@@ -245,26 +248,26 @@ class Eiten:
         else:
             plt.tight_layout()
             plt.show()
+        plt.clf()
+        plt.cla()
 
-    def print_and_plot_portfolio_weights(self, weights_dictionary: dict, strategy, plot_num: int) -> None:
+    def print_and_plot_portfolio_weights(self, weights: dict,
+                                         strategy: str, plot_num: int) -> None:
         plt.style.use('seaborn-white')
         plt.rc('grid', linestyle="dotted", color='#a0a0a0')
         plt.rcParams['axes.edgecolor'] = "#04383F"
         plt.rcParams['figure.figsize'] = (12, 6)
-        
+
         print("\n-------- Weights for %s --------" % strategy)
-        symbols = list(sorted(weights_dictionary.keys()))
-        symbol_weights = []
-        for symbol in symbols:
-            print("Symbol: %s, Weight: %.4f" %
-                  (symbol, weights_dictionary[symbol]))
-            symbol_weights.append(weights_dictionary[symbol])
+        symbols = list(weights.keys())
+        for k, v in weights.items():
+            print(f"Symbol: {k}, Weight: {v:.4f}")
 
         # Plot
         width = 0.1
-        x = np.arange(len(symbol_weights))
+        x = np.arange(len(weights))
         plt.bar(x + (width * (plot_num - 1)) + 0.05,
-                symbol_weights, label=strategy, width=width)
+                list(weights.values()), label=strategy, width=width)
         plt.xticks(x, symbols, fontsize=14)
         plt.yticks(fontsize=14)
         plt.xlabel("Symbols", fontsize=14)
