@@ -98,7 +98,7 @@ class BackTester:
         your choice in the future.
         """
         symbol_names = list(p_weights.keys())
-        #future_data = data_dict[symbol]["future"].Close
+        # future_data = data_dict[symbol]["future"].Close
 
         # Get future prices
         future_price_market = market_data["future"].Close

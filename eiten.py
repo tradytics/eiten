@@ -8,6 +8,7 @@ from data_loader import DataEngine
 from simulator import MontoCarloSimulator
 from backtester import BackTester
 from strategy_manager import StrategyManager
+from utils import random_matrix_theory_based_cov
 
 
 class _dotdict(dict):
@@ -111,8 +112,7 @@ class Eiten:
         if self.args.apply_noise_filtering:
             print(
                 "\n** Applying random matrix theory to filter out noise in the covariance matrix...\n")
-            cov_matrix = self.strategyManager.random_matrix_theory_based_cov(
-                log_returns)
+            cov_matrix = random_matrix_theory_based_cov(log_returns)
 
         symbol_names = list(self.data_dict.keys())
         pred_returns = self._get_predicted_returns()

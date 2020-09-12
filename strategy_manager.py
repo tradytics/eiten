@@ -1,11 +1,9 @@
 # Basic libraries
-import os
 import warnings
 from strategies.genetic_algo_strategy import GeneticAlgoStrategy
 from strategies.maximum_sharpe_ratio_strategy import MaximumSharpeRatioStrategy
 from strategies.eigen_portfolio_strategy import EigenPortfolioStrategy
 from strategies.minimum_variance_strategy import MinimumVarianceStrategy
-from strategies.strategy_helper_functions import StrategyHelperFunctions
 warnings.filterwarnings("ignore")
 
 
@@ -20,7 +18,6 @@ class StrategyManager:
         self.minimumVarianceStrategy = MinimumVarianceStrategy()
         self.eigenPortfolioStrategy = EigenPortfolioStrategy()
         self.maximumSharpeRatioStrategy = MaximumSharpeRatioStrategy()
-        self.strategyHelperFunctions = StrategyHelperFunctions()
 
     def calculate_genetic_algo_portfolio(self, symbols, returns_matrix_percentages):
         """
@@ -59,12 +56,4 @@ class StrategyManager:
         portfolio_weights_dictionary = self.maximumSharpeRatioStrategy.generate_portfolio(
             cov_matrix, returns_vector)
         return portfolio_weights_dictionary
-
-    def random_matrix_theory_based_cov(self, returns_matrix):
-        """
-        Covariance matrix filtering using random matrix theory
-        """
-        filtered_covariance_matrix = self.strategyHelperFunctions.random_matrix_theory_based_cov(
-            returns_matrix)
-        return filtered_covariance_matrix
 
