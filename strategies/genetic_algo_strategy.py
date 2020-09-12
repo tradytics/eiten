@@ -1,8 +1,7 @@
 # Basic libraries
-import os
-import random
 import warnings
 import numpy as np
+from utils import dotdict
 warnings.filterwarnings("ignore")
 
 
@@ -12,7 +11,7 @@ class GeneticAlgoStrategy:
     """
 
     def __init__(self):
-        print("Genetic algo strategy has been created")
+        self.name = "Genetic Algo"
         self.initial_genes = 100
         self.selection_top = 25
         self.mutation_iterations = 50
@@ -22,7 +21,9 @@ class GeneticAlgoStrategy:
         self.iterations = 50
         self.crossover_probability = 0.05
 
-    def generate_portfolio(self, symbols, return_matrix):
+    def generate_portfolio(self, **kwargs):
+        kwargs = dotdict(kwargs)
+        symbols = list(kwargs.cov_matrix.columns)
         self.gene_length = len(symbols)
 
         # Create initial genes
@@ -30,7 +31,7 @@ class GeneticAlgoStrategy:
 
         for i in range(self.iterations):
             # Select
-            top_genes = self.select(return_matrix, initial_genes)
+            top_genes = self.select(kwargs.perc_returns, initial_genes)
             # print("Iteration %d Best Sharpe Ratio: %.3f" % (i, top_genes[0][0]))
             top_genes = [item[1] for item in top_genes]
 
@@ -38,7 +39,7 @@ class GeneticAlgoStrategy:
             mutated_genes = self.mutate(top_genes)
             initial_genes = mutated_genes
 
-        top_genes = self.select(return_matrix, initial_genes)
+        top_genes = self.select(kwargs.perc_returns, initial_genes)
         best_gene = top_genes[0][1]
         # Gene is a distribution of weights for different stocks
         # transposed_gene = np.array(best_gene).transpose()

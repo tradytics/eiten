@@ -7,15 +7,9 @@ import json
 from data_loader import DataEngine
 from simulator import MontoCarloSimulator
 from backtester import BackTester
-from strategy_manager import StrategyManager
 from utils import random_matrix_theory_based_cov
-
-
-class _dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+from utils import dotdict
+from strategies import portfolios
 
 
 class Eiten:
@@ -23,7 +17,7 @@ class Eiten:
         if args is None:
             arg_types = {"str": str, "int": int, "bool": bool}
             x = json.load(open("commands.json", "r"))
-            args = _dotdict(
+            args = dotdict(
                 {i["comm"][2:]: arg_types[i["type"]](i["default"]) for i in x})
 
         print("\n--* Eiten has been initialized...")
@@ -34,9 +28,6 @@ class Eiten:
 
         # Monte carlo simulator
         self.simulator = MontoCarloSimulator()
-
-        # Strategy manager
-        self.strategyManager = StrategyManager()
 
         # Back tester
         self.backTester = BackTester()
@@ -114,121 +105,64 @@ class Eiten:
                 "\n** Applying random matrix theory to filter out noise in the covariance matrix...\n")
             cov_matrix = random_matrix_theory_based_cov(log_returns)
 
-        symbol_names = list(self.data_dict.keys())
         pred_returns = self._get_predicted_returns()
         perc_returns = self._get_perc_returns()
 
+        self.portfolios = {}
         # Get weights for the portfolio
-        eigen_portfolio_weights_dictionary = self.strategyManager.calculate_eigen_portfolio(
-            cov_matrix, self.args.eigen_portfolio_number)
-        mvp_portfolio_weights_dictionary = self.strategyManager.calculate_minimum_variance_portfolio(
-            symbol_names, cov_matrix)
-        msr_portfolio_weights_dictionary = self.strategyManager.calculate_maximum_sharpe_portfolio(
-            cov_matrix, pred_returns.T)
-        ga_portfolio_weights_dictionary = self.strategyManager.calculate_genetic_algo_portfolio(
-            symbol_names, perc_returns)
+        for p in portfolios:
+            name = p.name
+            weights = p.generate_portfolio(
+                cov_matrix=cov_matrix, p_number=self.args.eigen_portfolio_number,
+                pred_returns=pred_returns.T,
+                perc_returns=perc_returns)
+            self.portfolios[name] = weights
 
         # Print weights
         print("\n*% Printing portfolio weights...")
-        self.print_and_plot_portfolio_weights(
-            eigen_portfolio_weights_dictionary, 'Eigen Portfolio', plot_num=1)
-        self.print_and_plot_portfolio_weights(
-            mvp_portfolio_weights_dictionary, 'Minimum Variance Portfolio (MVP)', plot_num=2)
-        self.print_and_plot_portfolio_weights(
-            msr_portfolio_weights_dictionary, 'Maximum Sharpe Portfolio (MSR)', plot_num=3)
-        self.print_and_plot_portfolio_weights(
-            ga_portfolio_weights_dictionary, 'Genetic Algo (GA)', plot_num=4)
+        p_count = 1
+        for i in self.portfolios:
+            self.print_and_plot_portfolio_weights(
+                self.portfolios[i], i, plot_num=p_count)
+            p_count += 1
         self.draw_plot("output/weights.png")
 
         # Back test
         print("\n*& Backtesting the portfolios...")
 
-        self.backTester.back_test(eigen_portfolio_weights_dictionary,
-                                  self.data_dict,
-                                  self.market_data,
-                                  self.args.only_long,
-                                  market_chart=True,
-                                  strategy_name='Eigen Portfolio')
+        for i in self.portfolios:
 
-        self.backTester.back_test(
-            mvp_portfolio_weights_dictionary,
-            self.data_dict,
-            self.market_data,
-            self.args.only_long,
-            market_chart=False,
-            strategy_name='Minimum Variance Portfolio (MVP)')
-
-        self.backTester.back_test(msr_portfolio_weights_dictionary,
-                                  self.data_dict,
-                                  self.market_data,
-                                  self.args.only_long,
-                                  market_chart=False,
-                                  strategy_name='Maximum Sharpe Portfolio (MSR)')
-        self.backTester.back_test(ga_portfolio_weights_dictionary,
-                                  self.data_dict,
-                                  self.market_data,
-                                  self.args.only_long,
-                                  market_chart=False,
-                                  strategy_name='Genetic Algo (GA)')
+            self.backTester.back_test(self.portfolios[i],
+                                      self.data_dict,
+                                      self.market_data,
+                                      self.args.only_long,
+                                      market_chart=True,
+                                      strategy_name=i)
         self.draw_plot("output/backtest.png")
 
         if self.args.is_test:
             print("\n#^ Future testing the portfolios...")
             # Future test
-            self.backTester.future_test(eigen_portfolio_weights_dictionary,
-                                        self.data_dict,
-                                        self.market_data,
-                                        self.args.only_long,
-                                        market_chart=True,
-                                        strategy_name='Eigen Portfolio')
-            self.backTester.future_test(mvp_portfolio_weights_dictionary,
-                                        self.data_dict,
-                                        self.market_data,
-                                        self.args.only_long,
-                                        market_chart=False,
-                                        strategy_name='Minimum Variance Portfolio (MVP)')
+            for i in self.portfolios:
 
-            self.backTester.future_test(msr_portfolio_weights_dictionary,
-                                        self.data_dict,
-                                        self.market_data,
-                                        self.args.only_long,
-                                        market_chart=False,
-                                        strategy_name='Maximum Sharpe Portfolio (MSR)')
-            self.backTester.future_test(ga_portfolio_weights_dictionary,
-                                        self.data_dict,
-                                        self.market_data,
-                                        self.args.only_long,
-                                        market_chart=False,
-                                        strategy_name='Genetic Algo (GA)')
+                self.backTester.future_test(self.portfolios[i],
+                                            self.data_dict,
+                                            self.market_data,
+                                            self.args.only_long,
+                                            market_chart=True,
+                                            strategy_name=i)
+
             self.draw_plot("output/future_tests.png")
 
         # Simulation
         print("\n+$ Simulating future prices using monte carlo...")
-        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
-                                          self.data_dict,
-                                          self.market_data,
-                                          self.args.is_test,
-                                          market_chart=True,
-                                          strategy_name='Eigen Portfolio')
-        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
-                                          self.data_dict,
-                                          self.market_data,
-                                          self.args.is_test,
-                                          market_chart=False,
-                                          strategy_name='Minimum Variance Portfolio (MVP)')
-        self.simulator.simulate_portfolio(eigen_portfolio_weights_dictionary,
-                                          self.data_dict,
-                                          self.market_data,
-                                          self.args.is_test,
-                                          market_chart=False,
-                                          strategy_name='Maximum Sharpe Portfolio (MSR)')
-        self.simulator.simulate_portfolio(ga_portfolio_weights_dictionary,
-                                          self.data_dict,
-                                          self.market_data,
-                                          self.args.is_test,
-                                          market_chart=False,
-                                          strategy_name='Genetic Algo (GA)')
-
+        for i in self.portfolios:
+            self.simulator.simulate_portfolio(self.portfolios[i],
+                                              self.data_dict,
+                                              self.market_data,
+                                              self.args.is_test,
+                                              market_chart=True,
+                                              strategy_name=i)
         self.draw_plot("output/monte_carlo.png")
 
     def draw_plot(self, filename="output/graph.png"):
@@ -273,4 +207,3 @@ class Eiten:
         plt.xlabel("Symbols", fontsize=14)
         plt.ylabel("Weight in Portfolio", fontsize=14)
         plt.title("Portfolio Weights for Different Strategies", fontsize=14)
-
