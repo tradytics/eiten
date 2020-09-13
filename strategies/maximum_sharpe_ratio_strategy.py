@@ -24,7 +24,7 @@ class MaximumSharpeRatioStrategy:
             np.dot(ones.transpose(), inverse_cov_matrix), kwargs.pred_returns)
         msr_portfolio_weights = numerator / denominator
 
-        weights = {kwargs.cov_matrix.columns[i]: msr_portfolio_weights[i][0]
+        weights = {kwargs.cov_matrix.columns[i]: msr_portfolio_weights[i]
                    for i in range(len(msr_portfolio_weights))}
 
         return weights
