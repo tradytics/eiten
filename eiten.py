@@ -22,6 +22,7 @@ class Eiten:
         print("\n--* Eiten has been initialized...")
         self.args = args
 
+
         # Data dictionary
         self.data_dict = {}  # {"market": args.market_index}
         self.market_data = {}
