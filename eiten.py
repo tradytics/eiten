@@ -5,7 +5,7 @@ import json
 
 # Load our modules
 from data_loader import DataEngine
-from simulator import MontoCarloSimulator
+from simulator import MonteCarloSimulator
 from backtester import BackTester
 from utils import random_matrix_theory_based_cov
 from utils import dotdict
@@ -27,7 +27,7 @@ class Eiten:
         self.dataEngine = DataEngine(args)
 
         # Monte carlo simulator
-        self.simulator = MontoCarloSimulator()
+        self.simulator = MonteCarloSimulator()
 
         # Back tester
         self.backTester = BackTester()
