@@ -49,8 +49,8 @@ class DataEngine:
 
     def _split_data(self, data):
         if self.args.is_test:
-            return (data.iloc[-self.args.future_bars:],
-                    data.iloc[:-self.args.future_bars])
+            return (data.iloc[:-self.args.future_bars],
+                    data.iloc[-self.args.future_bars:])
 
     def get_data(self, symbol):
         """
