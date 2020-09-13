@@ -5,6 +5,7 @@ import pandas as pd
 import yfinance as yf
 from tqdm import tqdm
 import warnings
+import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 
@@ -27,7 +28,7 @@ class DataEngine:
         self.data_dictionary = {}
 
         # Data length
-        self.stock_data_length = []
+        self.stock_data_length = 0
 
     def load_stocks_from_file(self):
         """
@@ -50,8 +51,8 @@ class DataEngine:
     def _split_data(self, data):
         if self.args.is_test:
 
-        return (data.iloc[:-self.args.future_bars]["Close"].values,
-                data.iloc[-self.args.future_bars:]["Close"].values)
+            return (data.iloc[:-self.args.future_bars]["Close"].values,
+                    data.iloc[-self.args.future_bars:]["Close"].values)
 
     def get_data(self, symbol):
         """
@@ -79,10 +80,12 @@ class DataEngine:
                 interval=interval,
                 auto_adjust=False,
                 progress=False)
-            stock_prices = stock_prices.reset_index()
+            # stock_prices = stock_prices.reset_index()
 
-            data_length = stock_prices.shape[0]
-            self.stock_data_length.append(data_length)
+            if self.stock_data_length == 0:
+                self.stock_data_length = stock_prices.shape[0]
+            elif stock_prices.shape[0] != self.stock_data_length:
+                raise Exception(f"{symbol}: Invalid Stock Length")
 
             if self.args.history_to_use == "all":
                 # For some reason, yfinance gives some 0
@@ -95,6 +98,7 @@ class DataEngine:
 
         except Exception as e:
             print("Exception", e)
+            return None, None
 
         return historical_prices, future_prices
 
@@ -104,8 +108,8 @@ class DataEngine:
         """
 
         print("Loading data for all stocks...")
-        data_dict = {"historical": pd.DataFrame(columns=self.stocks_list),
-                     "future": pd.DataFrame(columns=self.stocks_list)
+        data_dict = {"historical": pd.DataFrame(),
+                     "future": pd.DataFrame()
                      }
 
         # Any stock with very low volatility is ignored.
@@ -121,7 +125,26 @@ class DataEngine:
             except Exception as e:
                 print("Exception", e)
                 continue
-        data_dict["historical"].fillna(1)    
-        data_dict["future"].fillna(1)
+        data_dict["historical"] = data_dict["historical"].fillna(1)
+        data_dict["future"] = data_dict["future"].fillna(1)
+
+        try:
+            data_dict["historical"].to_csv("historical.csv")
+            data_dict["future"].to_csv("future.csv")
+
+        except Exception as e:
+            print("Exception: ", e)
+
+        try:
+            plt.style.use('seaborn-white')
+            plt.rc('grid', linestyle="dotted", color='#a0a0a0')
+            plt.rcParams['axes.edgecolor'] = "#04383F"
+            plt.rcParams['figure.figsize'] = (16, 9)
+            data_dict["historical"].plot()
+            plt.savefig("./output/gt_historical.png")
+            data_dict["future"].plot()
+            plt.savefig("./output/gt_future.png")
+        except Exception as e:
+            print("Exception: ", e)
 
         return data_dict

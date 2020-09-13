@@ -171,6 +171,7 @@ class Eiten:
             p_count += 1
         self.draw_plot("output/weights.png")
         self._backtest()
+        self.draw_plot("output/back_test.png")
 
         if self.args.is_test:
             self._futuretest()
@@ -202,7 +203,6 @@ class Eiten:
         else:
             plt.tight_layout()
             plt.show()
-        plt.clf()
         plt.cla()
 
     def print_and_plot_portfolio_weights(self, weights: dict,
@@ -222,7 +222,7 @@ class Eiten:
         x = np.arange(len(weights))
         plt.bar(x + (width * (plot_num - 1)) + 0.05,
                 list(weights.values()), label=strategy, width=width)
-        plt.xticks(x, symbols, fontsize=14)
+        plt.xticks(x, symbols)
         plt.yticks(fontsize=14)
         plt.xlabel("Symbols", fontsize=14)
         plt.ylabel("Weight in Portfolio", fontsize=14)

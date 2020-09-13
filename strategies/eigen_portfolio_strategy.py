@@ -21,10 +21,10 @@ class EigenPortfolioStrategy:
         # This is a portfolio that is uncorrelated to market and still yields good returns
         eigen_portfolio = eigh_vectors[:, -kwargs.p_number] / \
             np.sum(eigh_vectors[:, -kwargs.p_number])
-        if kwargs.long_only:
-            weights = {kwargs.cov_matrix.columns[i]: max(0, eigen_portfolio[i])
-                       for i in range(eigen_portfolio.shape[0])}
-        else:
-            weights = {kwargs.cov_matrix.columns[i]: max(0, eigen_portfolio[i])
-                       for i in range(eigen_portfolio.shape[0])}
+        # if kwargs.long_only:
+        #     weights = {kwargs.cov_matrix.columns[i]: max(0, eigen_portfolio[i])
+        #                for i in range(eigen_portfolio.shape[0])}
+        # else:
+        weights = {kwargs.cov_matrix.columns[i]: eigen_portfolio[i]
+                   for i in range(eigen_portfolio.shape[0])}
         return weights
