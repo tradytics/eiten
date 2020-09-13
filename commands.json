@@ -2,12 +2,12 @@
         "comm": "--history_to_use",
         "type": "str",
         "default": "all",
-        "help": "How many bars of 1 hour do you want to use for the anomaly detection model. Either an integer or all"
+        "help": "How many bars of do you want to use for the anomaly detection model. Either an integer or all"
     },
     {
         "comm": "--data_granularity_minutes",
         "type": "int",
-        "default": "15",
+        "default": "3600",
         "help": "Minute level data granularity that you want to use. Default is 60 minute bars."
     },
     {
@@ -19,7 +19,7 @@
     {
         "comm": "--future_bars",
         "type": "int",
-        "default": "30",
+        "default": "90",
         "help": "How many bars to keep for testing purposes."
     },
     {

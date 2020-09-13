@@ -39,30 +39,27 @@ class BackTester:
         return weight
 
     @classmethod
-    def plot_market(self, **kwargs):
-        kwargs = dotdict(kwargs)
-        x = np.arange(len(kwargs.market_returns_cumulative))
-        plt.plot(x, kwargs.market_returns_cumulative, linewidth=2.0,
+    def plot_market(self, market_returns):
+        x = np.arange(len(market_returns))
+        plt.plot(x, market_returns, linewidth=2.0,
                  color='#282828', label='Market Index', linestyle='--')
 
     @classmethod
     def plot_test(self, **kwargs):
         # Styling for plots
+        kwargs = dotdict(kwargs)
         plt.style.use('seaborn-white')
         plt.rc('grid', linestyle="dotted", color='#a0a0a0')
         plt.rcParams['axes.edgecolor'] = "#04383F"
+        plt.rcParams['axes.titlesize'] = "large"
+        plt.rcParams['axes.labelsize'] = "medium"
+        plt.rcParams['lines.linewidth'] = 2
         # Plot
-        x = np.arange(len(kwargs.portfolio_returns_cumulative))
         plt.axhline(y=0, linestyle='dotted', alpha=0.3, color='black')
-        plt.plot(x, kwargs.portfolio_returns_cumulative,
-                 linewidth=2.0, label=kwargs.strategy_name)
 
         # Plotting styles
-        plt.title(kwargs.title, fontsize=14)
-        plt.xlabel(kwargs.xlabel, fontsize=14)
-        plt.ylabel(kwargs.ylabel, fontsize=14)
-        plt.xticks(fontsize=14)
-        plt.yticks(fontsize=14)
+        kwargs.df.plot(fontsize=14, title=kwargs.title,
+                       xlabel=kwargs.xlabel, ylabel=kwargs.ylabel,)
 
     @classmethod
     def get_historical_test(self, p_weights, data, long_only: bool):
@@ -88,32 +85,16 @@ class BackTester:
             normal_returns_matrix, portfolio_weights_vector)
         return np.cumsum(portfolio_returns)
 
-        # # Plot returns
-        # x = np.arange(len(portfolio_returns_cumulative))
-        # plt.plot(x, portfolio_returns_cumulative,
-        #          linewidth=2.0, label=strategy_name)
-        # plt.axhline(y=0, linestyle='dotted', alpha=0.3, color='black')
-
-        # # Plotting styles
-        # plt.title("Backtest Results", fontsize=14)
-        # plt.xlabel("Bars (Time Sorted)", fontsize=14)
-        # plt.ylabel("Cumulative Percentage Return", fontsize=14)
-        # plt.xticks(fontsize=14)
-        # plt.yticks(fontsize=14)
-
     @classmethod
-    def get_future_market_returns(self, market_data):
+    def get_market_returns(self, market_data, direction):
+        assert (direction in ["historical", "future"]
+                ), "direction must be 'historical' or 'future'"
         # Get future prices
-        future_price_market = market_data["future"].Close
+        future_price_market = market_data[direction].Close
         market_returns = self.price_delta(future_price_market)
         return np.cumsum(market_returns)
 
-    def get_historical_market_returns(self, historical_data):
-        # Get market returns during the backtesting time
-        historical_prices = historical_data["historical"]["Close"]
-        market_returns = self.price_delta(historical_prices)
-        return np.cumsum(market_returns)
-
+    @classmethod
     def predict_future_returns(self, p_weights, data,
                                long_only: bool) -> np.ndarray:
         """

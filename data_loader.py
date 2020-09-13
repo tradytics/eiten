@@ -49,8 +49,9 @@ class DataEngine:
 
     def _split_data(self, data):
         if self.args.is_test:
-            return (data.iloc[-self.args.future_bars:],
-                    data.iloc[:-self.args.future_bars])
+
+            return (data.iloc[:-self.args.future_bars],
+                    data.iloc[-self.args.future_bars:])
 
     def get_data(self, symbol):
         """
@@ -95,6 +96,7 @@ class DataEngine:
                 stock_prices = stock_prices.iloc[-self.args.history_to_use:]
 
             historical_prices, future_prices = self._split_data(stock_prices)
+            print(f"Data separation\nH:{historical_prices.shape[0]}\nF:{future_prices.shape[0]}")
 
         except Exception as e:
             print("Exception", e)

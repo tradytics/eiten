@@ -74,12 +74,42 @@ class Eiten:
         """
         # Gather data for all stocks in a dictionary format
         # Dictionary keys will be -> historical, future
-        de = DataEngine()
+        de = DataEngine(self.args)
         self.data_dict = de.collect_data_for_all_tickers()
         p, f = de.get_data(self.args.market_index)
         self.market_data["historical"], self.market_data["future"] = p, f
         # Get return matrices and vectors
         return self.data_dict
+
+    def _backtest(self):
+        # Back test
+        print("\n*& Backtesting the portfolios...")
+
+        df = pd.DataFrame(columns=list(self.portfolios.keys()))
+        for i in self.portfolios:
+            df[i] = BackTester.get_historical_test(
+                self.portfolios[i],
+                self.data_dict,
+                self.args.only_long)
+        mp = BackTester.get_market_returns(self.market_data, "historical")
+        BackTester.plot_test(title="Backtest Results",
+                             xlabel="Bars (Time Sorted)",
+                             ylabel="Cumulative Percentage Return",
+                             df=df)
+        BackTester.plot_market(mp)
+
+    def _futuretest(self):
+        print("\n#^ Future testing the portfolios...")
+        # Future test
+        df = pd.DataFrame(columns=list(self.portfolios.keys()))
+        for i in self.portfolios:
+            df[i] = BackTester.predict_future_returns(self.portfolios[i],
+                                                      self.data_dict,
+                                                      self.args.only_long)
+            BackTester.plot_test(title="Future Test Results",
+                                 xlabel="Bars (Time Sorted)",
+                                 ylabel="Cumulative Percentage Return",
+                                 df=df)
 
     def run_strategies(self):
         """
@@ -119,32 +149,12 @@ class Eiten:
             p_count += 1
         self.draw_plot("output/weights.png")
 
-        # Back test
-        print("\n*& Backtesting the portfolios...")
-
-        df_back = pd.Dataframe(columns=list(self.portfolios.keys()))
-        for i in self.portfolios:
-            df_back[i] = self.backTester.get_historical_test(self.portfolios[i],
-                                                self.data_dict,
-                                                self.args.only_long)
-        self.draw_plot("output/backtest.png")
-
-        return
+        self._backtest()
 
         if self.args.is_test:
-            print("\n#^ Future testing the portfolios...")
-            # Future test
-            for i in self.portfolios:
-
-                self.backTester.future_test(self.portfolios[i],
-                                            self.data_dict,
-                                            self.market_data,
-                                            self.args.only_long,
-                                            market_chart=True,
-                                            strategy_name=i)
-
-            self.draw_plot("output/future_tests.png")
-
+            self._futuretest()
+        self.draw_plot("output/future_tests.png")
+        return
         # Simulation
         print("\n+$ Simulating future prices using monte carlo...")
         for i in self.portfolios:
@@ -164,6 +174,9 @@ class Eiten:
         plt.style.use('seaborn-white')
         plt.rc('grid', linestyle="dotted", color='#a0a0a0')
         plt.rcParams['axes.edgecolor'] = "#04383F"
+        plt.rcParams['axes.titlesize'] = "large"
+        plt.rcParams['axes.labelsize'] = "medium"
+        plt.rcParams['lines.linewidth'] = 2
         plt.rcParams['figure.figsize'] = (12, 6)
 
         plt.grid()
