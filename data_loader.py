@@ -49,8 +49,9 @@ class DataEngine:
 
     def _split_data(self, data):
         if self.args.is_test:
-            return (data.iloc[:-self.args.future_bars],
-                    data.iloc[-self.args.future_bars:])
+
+        return (data.iloc[:-self.args.future_bars]["Close"].values,
+                data.iloc[-self.args.future_bars:]["Close"].values)
 
     def get_data(self, symbol):
         """
@@ -79,10 +80,6 @@ class DataEngine:
                 auto_adjust=False,
                 progress=False)
             stock_prices = stock_prices.reset_index()
-            try:
-                stock_prices = stock_prices.drop(columns=["Adj Close"])
-            except Exception as e:
-                print("Exception", e)
 
             data_length = stock_prices.shape[0]
             self.stock_data_length.append(data_length)
@@ -107,7 +104,9 @@ class DataEngine:
         """
 
         print("Loading data for all stocks...")
-        data_dict = {}
+        data_dict = {"historical": pd.DataFrame(columns=self.stocks_list),
+                     "future": pd.DataFrame(columns=self.stocks_list)
+                     }
 
         # Any stock with very low volatility is ignored.
         # You can change this line to address that.
@@ -116,25 +115,13 @@ class DataEngine:
             try:
                 historical_data, future_data = self.get_data(symbol)
                 if historical_data is not None:
-                    data_dict[symbol] = {
-                        "historical": historical_data,
-                        "future": future_data
-                    }
+                    data_dict["historical"][symbol] = historical_data
+                if future_data is not None:
+                    data_dict["future"][symbol] = future_data
             except Exception as e:
                 print("Exception", e)
                 continue
+        data_dict["historical"].fillna(1)    
+        data_dict["future"].fillna(1)
 
-        return self.clean_data(data_dict)
-
-    def clean_data(self, data_dict):
-        """
-        Remove bad data i.e data that had some errors while scraping or 
-        feature generation
-
-        """
-
-        length_dictionary = collections.Counter(
-            [data_dict[i]["historical"].shape[0] for i in data_dict])
-        std_len = length_dictionary.most_common(1)[0][0]
-
-        return {i: data_dict[i] for i in data_dict if data_dict[i]["historical"].shape[0] == std_len}
+        return data_dict

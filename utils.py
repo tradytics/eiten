@@ -2,13 +2,16 @@
 import warnings
 import numpy as np
 import pandas as pd
+
 warnings.filterwarnings("ignore")
+
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
 
 def random_matrix_theory_based_cov(log_returns):
     """

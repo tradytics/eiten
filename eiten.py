@@ -5,7 +5,6 @@ import json
 
 # Load our modules
 from data_loader import DataEngine
-from simulator import MonteCarloSimulator
 from backtester import BackTester
 from utils import random_matrix_theory_based_cov
 from utils import dotdict
@@ -23,14 +22,6 @@ class Eiten:
         print("\n--* Eiten has been initialized...")
         self.args = args
 
-        # Create data engine
-        self.dataEngine = DataEngine(args)
-
-        # Monte carlo simulator
-        self.simulator = MonteCarloSimulator()
-
-        # Back tester
-        self.backTester = BackTester()
 
         # Data dictionary
         self.data_dict = {}  # {"market": args.market_index}
@@ -55,11 +46,7 @@ class Eiten:
         :returns: A Pandas Dataframe of returns for each asset
         :rtype: pd.Dataframe
         """
-        res = pd.DataFrame(pd.DataFrame(columns=list(self.data_dict.keys())))
-        for i in self.data_dict:
-            c = self.data_dict[i]["historical"].Close
-            res[i] = f(c)
-        return res
+        return f(self.data_dict["historical"])
 
     def _get_perc_returns(self):
         return self._get_abstract_returns(self._get_price_delta)
@@ -71,8 +58,8 @@ class Eiten:
         return self._get_abstract_returns(self._get_log_return)
 
     def _get_predicted_return(self, data: pd.DataFrame) -> np.ndarray:
-        return np.array([np.mean(self._get_price_delta(data) /
-                                 np.array(np.arange(len(data) - 1, 0, -1)))])
+        return self._get_price_delta(data).div(
+            np.array(np.arange(len(data) - 1, 0, -1)), axis=0).mean(axis=0)
 
     def _get_predicted_returns(self):
         return self._get_abstract_returns(self._get_predicted_return)
@@ -83,17 +70,73 @@ class Eiten:
         """
         # Gather data for all stocks in a dictionary format
         # Dictionary keys will be -> historical, future
-        self.data_dict = self.dataEngine.collect_data_for_all_tickers()
-        p, f = self.dataEngine.get_data(self.args.market_index)
-        self.market_data["historical"], self.market_data["future"] = p, f
+        de = DataEngine(self.args)
+        self.data_dict = de.collect_data_for_all_tickers()
+        p, f = de.get_data(self.args.market_index)
+
+        print("Market", p.shape, f.shape)
+        self.market_data["historical"] = pd.DataFrame(
+            columns=[self.args.market_index], data=p)
+        self.market_data["future"] = pd.DataFrame(
+            columns=[self.args.market_index], data=f)
         # Get return matrices and vectors
         return self.data_dict
+
+    def _backtest(self):
+        # Back test
+        print("\n*& Backtesting the portfolios...")
+
+        df = pd.DataFrame(columns=list(self.portfolios.keys()))
+        for i in self.portfolios:
+            df[i] = BackTester.get_test(
+                self.portfolios[i],
+                self.data_dict,
+                "historical",
+                self.args.only_long)
+        mp = BackTester.get_market_returns(self.market_data, "historical")
+        BackTester.plot_test(title="Backtest Results",
+                             xlabel="Bars (Time Sorted)",
+                             ylabel="Cumulative Percentage Return",
+                             df=df)
+        BackTester.plot_market(mp)
+
+    def _futuretest(self):
+        print("\n#^ Future testing the portfolios...")
+        # Future test
+        df = pd.DataFrame(columns=list(self.portfolios.keys()))
+        for i in self.portfolios:
+            df[i] = BackTester.get_test(self.portfolios[i],
+                                        self.data_dict,
+                                        "future",
+                                        self.args.only_long)
+        mp = BackTester.get_market_returns(self.market_data, "future")
+        BackTester.plot_test(title="Future Test Results",
+                             xlabel="Bars (Time Sorted)",
+                             ylabel="Cumulative Percentage Return",
+                             df=df)
+        BackTester.plot_market(mp)
+
+    def _monte_carlo(self):
+        df = pd.DataFrame(columns=list(self.portfolios.keys()))
+        self.data_dict["sim"] = BackTester.simulate_future_prices(
+            self.data_dict, 30)
+        for i in self.portfolios:
+            df[i] = BackTester.get_test(self.portfolios[i],
+                                        self.data_dict,
+                                        "sim",
+                                        self.args.only_long)
+            BackTester.plot_test(title="Simulated Future Returns",
+                                 xlabel="Bars (Time Sorted)",
+                                 ylabel="Cumulative Percentage Return",
+                                 df=df)
 
     def run_strategies(self):
         """
         Run strategies, back and future test them, and simulate the returns.
         """
         self.load_data()
+        print("historical", self.data_dict["historical"].shape)
+        print("future", self.data_dict["future"].shape)
 
         # Calculate covariance matrix
         log_returns = self._get_log_returns()
@@ -115,7 +158,8 @@ class Eiten:
             weights = p.generate_portfolio(
                 cov_matrix=cov_matrix, p_number=self.args.eigen_portfolio_number,
                 pred_returns=pred_returns.T,
-                perc_returns=perc_returns)
+                perc_returns=perc_returns,
+                long_only=self.args.only_long)
             self.portfolios[name] = weights
 
         # Print weights
@@ -126,44 +170,17 @@ class Eiten:
                 self.portfolios[i], i, plot_num=p_count)
             p_count += 1
         self.draw_plot("output/weights.png")
-
-        # Back test
-        print("\n*& Backtesting the portfolios...")
-
-        for i in self.portfolios:
-
-            self.backTester.back_test(self.portfolios[i],
-                                      self.data_dict,
-                                      self.market_data,
-                                      self.args.only_long,
-                                      market_chart=True,
-                                      strategy_name=i)
-        self.draw_plot("output/backtest.png")
+        self._backtest()
 
         if self.args.is_test:
-            print("\n#^ Future testing the portfolios...")
-            # Future test
-            for i in self.portfolios:
-
-                self.backTester.future_test(self.portfolios[i],
-                                            self.data_dict,
-                                            self.market_data,
-                                            self.args.only_long,
-                                            market_chart=True,
-                                            strategy_name=i)
-
-            self.draw_plot("output/future_tests.png")
+            self._futuretest()
+        self.draw_plot("output/future_tests.png")
 
         # Simulation
         print("\n+$ Simulating future prices using monte carlo...")
-        for i in self.portfolios:
-            self.simulator.simulate_portfolio(self.portfolios[i],
-                                              self.data_dict,
-                                              self.market_data,
-                                              self.args.is_test,
-                                              market_chart=True,
-                                              strategy_name=i)
+        self._monte_carlo()
         self.draw_plot("output/monte_carlo.png")
+        return
 
     def draw_plot(self, filename="output/graph.png"):
         """
@@ -173,6 +190,9 @@ class Eiten:
         plt.style.use('seaborn-white')
         plt.rc('grid', linestyle="dotted", color='#a0a0a0')
         plt.rcParams['axes.edgecolor'] = "#04383F"
+        plt.rcParams['axes.titlesize'] = "large"
+        plt.rcParams['axes.labelsize'] = "medium"
+        plt.rcParams['lines.linewidth'] = 2
         plt.rcParams['figure.figsize'] = (12, 6)
 
         plt.grid()
