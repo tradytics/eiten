@@ -57,7 +57,7 @@ class BackTester:
     @staticmethod
     def get_test(p_weights, data, direction: str, long_only: bool):
         """
-        Main backtest function. Takes in the portfolio weights and compares 
+        Main backtest function. Takes in the portfolio weights and compares
         the portfolio returns with a market index of your choice.
         """
 
@@ -67,15 +67,13 @@ class BackTester:
         # Get invidiual returns for each stock in our portfolio
         normal_returns_matrix = []
         symbol_historical_prices = data[direction]
-        symbol_historical_returns = get_price_deltas(
-            symbol_historical_prices)
-        normal_returns_matrix.append(symbol_historical_returns)
 
         # Get portfolio returns
-        normal_returns_matrix = np.array(normal_returns_matrix)
-        portfolio_returns = np.dot(
-            normal_returns_matrix, list(p_weights.values()))
-        return np.cumsum(portfolio_returns)
+        normal_returns_matrix = get_price_deltas(
+            symbol_historical_prices).cumsum()
+        portfolio_returns = np.dot(normal_returns_matrix, p_weights)
+
+        return portfolio_returns
 
     @staticmethod
     def get_market_returns(market_data, direction):

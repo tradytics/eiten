@@ -32,9 +32,6 @@ class Eiten:
 
         print('\n')
 
-    
-
-
     def load_data(self):
         """
         Loads data needed for analysis
@@ -52,52 +49,27 @@ class Eiten:
         # Get return matrices and vectors
         return self.data_dict
 
-    def _backtest(self):
+    def _test(self, direction):
         # Back test
         print("\n*& Backtesting the portfolios...")
+        assert direction in ["historical", "future"], "Invalid direction!"
 
-        df = pd.DataFrame(columns=list(self.portfolios.keys()))
-        for i in self.portfolios:
-            df[i] = BackTester.get_test(
-                self.portfolios[i],
-                self.data_dict,
-                "historical",
-                self.args.only_long)
-        return df
-        # mp = BackTester.get_market_returns(self.market_data, "historical")
-        # BackTester.plot_test(title="Backtest Results",
-        #                      xlabel="Bars (Time Sorted)",
-        #                      ylabel="Cumulative Percentage Return",
-        #                      df=df)
-        # BackTester.plot_market(mp)
-
-    def _futuretest(self):
-        print("\n#^ Future testing the portfolios...")
-        # Future test
-        df = pd.DataFrame(columns=list(self.portfolios.keys()))
-        for i in self.portfolios:
-            df[i] = BackTester.get_test(self.portfolios[i],
-                                        self.data_dict,
-                                        "future",
-                                        self.args.only_long)
-        return df
-        # mp = BackTester.get_market_returns(self.market_data, "future")
-        # BackTester.plot_test(title="Future Test Results",
-        #                      xlabel="Bars (Time Sorted)",
-        #                      ylabel="Cumulative Percentage Return",
-        #                      df=df)
-        # BackTester.plot_market(mp)
+        return pd.DataFrame(columns=self.portfolios.columns,
+                            data=BackTester.get_test(
+                                self.portfolios,
+                                self.data_dict,
+                                direction,
+                                self.args.only_long))
 
     def _monte_carlo(self, span):
-        df = pd.DataFrame(columns=list(self.portfolios.keys()))
         self.data_dict["sim"] = BackTester.simulate_future_prices(
             self.data_dict, get_predicted_returns, span)
-        for i in self.portfolios:
-            df[i] = BackTester.get_test(self.portfolios[i],
-                                        self.data_dict,
-                                        "sim",
-                                        self.args.only_long)
-        return df
+        return pd.DataFrame(columns=self.portfolios.columns,
+                            data=BackTester.get_test(
+                                self.portfolios,
+                                self.data_dict,
+                                "sim",
+                                self.args.only_long))
         # BackTester.plot_test(title="Simulated Future Returns",
         #                      xlabel="Bars (Time Sorted)",
         #                      ylabel="Cumulative Percentage Return",
@@ -131,20 +103,18 @@ class Eiten:
                 perc_returns=perc_returns,
                 long_only=self.args.only_long)
             self.portfolios[name] = weights
+        self.portfolios = pd.DataFrame.from_dict(self.portfolios)
 
         # Print weights
         print("\n*% Printing portfolio weights...")
         p_count = 1
-        for i in self.portfolios:
-            self.print_and_plot_portfolio_weights(
-                self.portfolios[i], i, plot_num=p_count)
-            p_count += 1
+        print(self.portfolios)
         self.draw_plot("output/weights.png", (p_count, 6))
-        self._backtest()
+        self._test("historical")
         self.draw_plot("output/back_test.png")
 
         if self.args.is_test:
-            self._futuretest()
+            self._test("future")
         self.draw_plot("output/future_tests.png")
 
         # Simulation
