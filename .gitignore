@@ -1,7 +1,9 @@
-
+.vscode
 *.pyc
 *.png
-notebooks/commands.json
+notebooks
 *.csv
 *.txt
 *.txt
+*.ipynb
+

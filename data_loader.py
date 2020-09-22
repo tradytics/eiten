@@ -5,7 +5,6 @@ import pandas as pd
 import yfinance as yf
 from tqdm import tqdm
 import warnings
-import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 
@@ -51,13 +50,22 @@ class DataEngine:
     def _split_data(self, data):
         if self.args.is_test:
 
-            return (data.iloc[:-self.args.future_bars]["Close"].values,
-                    data.iloc[-self.args.future_bars:]["Close"].values)
+            return (data.iloc[:-self.args.future_bars]["Adj Close"].values,
+                    data.iloc[-self.args.future_bars:]["Adj Close"].values)
+        return data["Adj Close"].values, None
 
-    def get_data(self, symbol):
+    def _format_symbol(self, s):
+        x = s.upper()
+        x = x.replace(".VN", ".V")
+        if len(x.split(".")) > 2:
+            x = x.replace(".", "-", 1)
+        return x
+
+    def get_data(self, symbol_raw):
         """
         Get stock data from yahoo finance.
         """
+        symbol = self._format_symbol(symbol_raw)
         future_prices = None
         historical_prices = None
         # Find period
@@ -135,16 +143,17 @@ class DataEngine:
         except Exception as e:
             print("Exception: ", e)
 
-        try:
-            plt.style.use('seaborn-white')
-            plt.rc('grid', linestyle="dotted", color='#a0a0a0')
-            plt.rcParams['axes.edgecolor'] = "#04383F"
-            plt.rcParams['figure.figsize'] = (16, 9)
-            data_dict["historical"].plot()
-            plt.savefig("./output/gt_historical.png")
-            data_dict["future"].plot()
-            plt.savefig("./output/gt_future.png")
-        except Exception as e:
-            print("Exception: ", e)
+        # try:
+        #     plt.style.use('seaborn-white')
+        #     plt.rc('grid', linestyle="dotted", color='#a0a0a0')
+        #     plt.rcParams['axes.edgecolor'] = "#04383F"
+        #     plt.rcParams['figure.figsize'] = (16, 9)
+        #     data_dict["historical"].plot()
+        #     plt.savefig("./output/gt_historical.png")
+        #     data_dict["future"].plot()
+        #     plt.savefig("./output/gt_future.png")
+        #     plt.clf()
+        # except Exception as e:
+        #     print("Exception: ", e)
 
         return data_dict

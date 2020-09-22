@@ -2,7 +2,7 @@
 import os
 import warnings
 import numpy as np
-from utils import dotdict
+from utils import dotdict, normalize_weights
 warnings.filterwarnings("ignore")
 
 
@@ -15,7 +15,7 @@ class EigenPortfolioStrategy:
         Inspired by: https://srome.github.io/Eigenvesting-I-Linear-Algebra-Can-Help-You-Choose-Your-Stock-Portfolio/
         """
         kwargs = dotdict(kwargs)
-        eigh_values, eigh_vectors = np.linalg.eigh(kwargs.cov_matrix.T)
+        eigh_values, eigh_vectors = np.linalg.eigh(kwargs.cov_matrix)
         # We don't need this but in case someone wants to analyze
         # market_eigen_portfolio = eig_vectors[:, -1] / np.sum(eig_vectors[:, -1])
         # This is a portfolio that is uncorrelated to market and still yields good returns
@@ -25,6 +25,7 @@ class EigenPortfolioStrategy:
         #     weights = {kwargs.cov_matrix.columns[i]: max(0, eigen_portfolio[i])
         #                for i in range(eigen_portfolio.shape[0])}
         # else:
+        eigen_portfolio = normalize_weights(eigen_portfolio)
         weights = {kwargs.cov_matrix.columns[i]: eigen_portfolio[i]
                    for i in range(eigen_portfolio.shape[0])}
         return weights

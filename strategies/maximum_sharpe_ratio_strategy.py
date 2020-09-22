@@ -1,7 +1,7 @@
 # Basic libraries
 import warnings
 import numpy as np
-from utils import dotdict
+from utils import dotdict, normalize_weights
 warnings.filterwarnings("ignore")
 
 
@@ -23,6 +23,8 @@ class MaximumSharpeRatioStrategy:
         denominator = np.dot(
             np.dot(ones.transpose(), inverse_cov_matrix), kwargs.pred_returns)
         msr_portfolio_weights = numerator / denominator
+
+        msr_portfolio_weights = normalize_weights(msr_portfolio_weights)
 
         weights = {kwargs.cov_matrix.columns[i]: msr_portfolio_weights[i]
                    for i in range(len(msr_portfolio_weights))}

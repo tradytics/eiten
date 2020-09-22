@@ -1,7 +1,7 @@
 # Basic libraries
 import warnings
 import numpy as np
-from utils import dotdict
+from utils import dotdict, normalize_weights
 warnings.filterwarnings("ignore")
 
 
@@ -19,6 +19,7 @@ class MinimumVarianceStrategy:
         ones = np.ones(len(inverse_cov_matrix))
         inverse_dot_ones = np.dot(inverse_cov_matrix, ones)
         min_var_weights = inverse_dot_ones / np.dot(inverse_dot_ones, ones)
+        min_var_weights = normalize_weights(min_var_weights)
         weights = {kwargs.cov_matrix.columns[i]: min_var_weights[i]
                    for i in range(min_var_weights.shape[0])}
         return weights

@@ -1,7 +1,7 @@
 # Basic libraries
 import warnings
 import numpy as np
-from utils import dotdict
+from utils import dotdict, normalize_weights
 warnings.filterwarnings("ignore")
 
 
@@ -13,13 +13,13 @@ class GeneticAlgoStrategy:
     def __init__(self):
         self.name = "Genetic Algo"
         self.initial_genes = 100
-        self.selection_top = 25
+        self.selection_top = 10
         self.mutation_iterations = 50
-        self.weight_update_factor = 0.1
+        self.weight_update_factor = 0.01
         self.gene_length = None
         self.genes_in_each_iteration = 250
-        self.iterations = 50
-        self.crossover_probability = 0.05
+        self.iterations = 100
+        self.crossover_probability = 0.1
 
     def generate_portfolio(self, **kwargs):
         kwargs = dotdict(kwargs)
@@ -31,7 +31,7 @@ class GeneticAlgoStrategy:
 
         for i in range(self.iterations):
             # Select
-            top_genes = self.select(kwargs.perc_returns, initial_genes)
+            top_genes = self.select(kwargs.sample_returns, initial_genes)
             # print("Iteration %d Best Sharpe Ratio: %.3f" % (i, top_genes[0][0]))
             top_genes = [item[1] for item in top_genes]
 
@@ -39,14 +39,14 @@ class GeneticAlgoStrategy:
             mutated_genes = self.mutate(top_genes)
             initial_genes = mutated_genes
 
-        top_genes = self.select(kwargs.perc_returns, initial_genes)
+        top_genes = self.select(kwargs.sample_returns, initial_genes)
         best_gene = top_genes[0][1]
         # Gene is a distribution of weights for different stocks
         # transposed_gene = np.array(best_gene).transpose()
         # returns = np.dot(return_matrix, transposed_gene)
         # returns_cumsum = np.cumsum(returns)
-
-        weights = {symbols[x]: best_gene[x] for x in range(0, len(best_gene))}
+        n_best = normalize_weights(best_gene)
+        weights = {symbols[x]: n_best[x] for x in range(0, len(best_gene))}
         return weights
 
     def generate_initial_genes(self, symbols):

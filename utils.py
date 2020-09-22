@@ -12,6 +12,23 @@ class dotdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+def normalize_weights(w):
+    pos_sum = 0
+    neg_sum = 0
+    for i in w:
+        if i > 0:
+            pos_sum += i
+        else:
+            neg_sum += i
+    neg_sum = abs(neg_sum)
+    for i in range(len(w)):
+        if w[i] > 0:
+            w[i] /= pos_sum
+        else:
+            w[i] /= neg_sum
+    return w
+
+
 
 def random_matrix_theory_based_cov(log_returns):
     """
@@ -48,3 +65,26 @@ def random_matrix_theory_based_cov(log_returns):
                                         np.diag(standard_deviations)))
     return pd.DataFrame(columns=log_returns.columns,
                         data=filtered_cov_matrix)
+
+
+def get_price_deltas(prices: pd.DataFrame):
+    """
+    Calculate ratio of change
+    """
+    return ((prices - prices.shift()) / prices.shift())[1:]
+
+def get_capm_returns(data:pd.DataFrame) -> pd.DataFrame:
+    #not correct
+    return data.std() * (get_price_deltas(data).mean() )
+
+def get_log_returns(data: pd.DataFrame) -> pd.DataFrame:
+    return np.log((data / data.shift())[1:])
+
+
+def get_exp_returns(data: pd.DataFrame) -> pd.DataFrame:
+    return get_price_deltas(data).ewm(span=len(data)).mean()
+
+
+def get_predicted_returns(data: pd.DataFrame) -> pd.DataFrame:
+    return get_price_deltas(data).div(
+        np.array(np.arange((len(data) - 1), 0, -1)), axis=0)

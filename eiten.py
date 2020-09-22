@@ -1,3 +1,4 @@
+# !/usr/bin/env python
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,7 +8,8 @@ import json
 from data_loader import DataEngine
 from backtester import BackTester
 from utils import random_matrix_theory_based_cov
-from utils import dotdict
+from utils import dotdict, get_predicted_returns, get_exp_returns
+from utils import get_price_deltas, get_log_returns
 from strategies import portfolios
 
 
@@ -21,7 +23,8 @@ class Eiten:
 
         print("\n--* Eiten has been initialized...")
         self.args = args
-
+        if self.args.history_to_use != "all":
+            self.args.history_to_use = int(self.args.history_to_use)
 
         # Data dictionary
         self.data_dict = {}  # {"market": args.market_index}
@@ -29,40 +32,8 @@ class Eiten:
 
         print('\n')
 
-    def _get_price_delta(self, prices: pd.DataFrame):
-        """
-        Calculate percentage change
-        """
-        return ((prices - prices.shift()) * 100 / prices.shift())[1:]
+    
 
-    def _get_abstract_returns(self, f):
-        """Abstract form of getting returns
-
-        This function takes a function f as parameter and applies the function
-        to the closing prices of the current data dictionary
-
-        :param f: a function that takes a dictionary and returns some returns
-        :type f: function
-        :returns: A Pandas Dataframe of returns for each asset
-        :rtype: pd.Dataframe
-        """
-        return f(self.data_dict["historical"])
-
-    def _get_perc_returns(self):
-        return self._get_abstract_returns(self._get_price_delta)
-
-    def _get_log_return(self, data: pd.DataFrame) -> np.ndarray:
-        return np.log((data / data.shift())[1:])
-
-    def _get_log_returns(self):
-        return self._get_abstract_returns(self._get_log_return)
-
-    def _get_predicted_return(self, data: pd.DataFrame) -> np.ndarray:
-        return self._get_price_delta(data).div(
-            np.array(np.arange(len(data) - 1, 0, -1)), axis=0).mean(axis=0)
-
-    def _get_predicted_returns(self):
-        return self._get_abstract_returns(self._get_predicted_return)
 
     def load_data(self):
         """
@@ -74,7 +45,6 @@ class Eiten:
         self.data_dict = de.collect_data_for_all_tickers()
         p, f = de.get_data(self.args.market_index)
 
-        print("Market", p.shape, f.shape)
         self.market_data["historical"] = pd.DataFrame(
             columns=[self.args.market_index], data=p)
         self.market_data["future"] = pd.DataFrame(
@@ -93,12 +63,13 @@ class Eiten:
                 self.data_dict,
                 "historical",
                 self.args.only_long)
-        mp = BackTester.get_market_returns(self.market_data, "historical")
-        BackTester.plot_test(title="Backtest Results",
-                             xlabel="Bars (Time Sorted)",
-                             ylabel="Cumulative Percentage Return",
-                             df=df)
-        BackTester.plot_market(mp)
+        return df
+        # mp = BackTester.get_market_returns(self.market_data, "historical")
+        # BackTester.plot_test(title="Backtest Results",
+        #                      xlabel="Bars (Time Sorted)",
+        #                      ylabel="Cumulative Percentage Return",
+        #                      df=df)
+        # BackTester.plot_market(mp)
 
     def _futuretest(self):
         print("\n#^ Future testing the portfolios...")
@@ -109,47 +80,46 @@ class Eiten:
                                         self.data_dict,
                                         "future",
                                         self.args.only_long)
-        mp = BackTester.get_market_returns(self.market_data, "future")
-        BackTester.plot_test(title="Future Test Results",
-                             xlabel="Bars (Time Sorted)",
-                             ylabel="Cumulative Percentage Return",
-                             df=df)
-        BackTester.plot_market(mp)
+        return df
+        # mp = BackTester.get_market_returns(self.market_data, "future")
+        # BackTester.plot_test(title="Future Test Results",
+        #                      xlabel="Bars (Time Sorted)",
+        #                      ylabel="Cumulative Percentage Return",
+        #                      df=df)
+        # BackTester.plot_market(mp)
 
-    def _monte_carlo(self):
+    def _monte_carlo(self, span):
         df = pd.DataFrame(columns=list(self.portfolios.keys()))
         self.data_dict["sim"] = BackTester.simulate_future_prices(
-            self.data_dict, 30)
+            self.data_dict, get_predicted_returns, span)
         for i in self.portfolios:
             df[i] = BackTester.get_test(self.portfolios[i],
                                         self.data_dict,
                                         "sim",
                                         self.args.only_long)
-            BackTester.plot_test(title="Simulated Future Returns",
-                                 xlabel="Bars (Time Sorted)",
-                                 ylabel="Cumulative Percentage Return",
-                                 df=df)
+        return df
+        # BackTester.plot_test(title="Simulated Future Returns",
+        #                      xlabel="Bars (Time Sorted)",
+        #                      ylabel="Cumulative Percentage Return",
+        #                      df=df)
 
     def run_strategies(self):
         """
         Run strategies, back and future test them, and simulate the returns.
         """
         self.load_data()
-        print("historical", self.data_dict["historical"].shape)
-        print("future", self.data_dict["future"].shape)
 
         # Calculate covariance matrix
-        log_returns = self._get_log_returns()
+        log_returns = get_log_returns(self.data_dict["historical"])
         cov_matrix = log_returns.cov()
 
         # Use random matrix theory to filter out the noisy eigen values
         if self.args.apply_noise_filtering:
-            print(
-                "\n** Applying random matrix theory to filter out noise in the covariance matrix...\n")
+            print("\nFiltering noise from cov matrix\n")
             cov_matrix = random_matrix_theory_based_cov(log_returns)
 
-        pred_returns = self._get_predicted_returns()
-        perc_returns = self._get_perc_returns()
+        pred_returns = get_predicted_returns(self.data_dict["historical"])
+        perc_returns = get_price_deltas(self.data_dict["historical"])
 
         self.portfolios = {}
         # Get weights for the portfolio
@@ -169,7 +139,7 @@ class Eiten:
             self.print_and_plot_portfolio_weights(
                 self.portfolios[i], i, plot_num=p_count)
             p_count += 1
-        self.draw_plot("output/weights.png")
+        self.draw_plot("output/weights.png", (p_count, 6))
         self._backtest()
         self.draw_plot("output/back_test.png")
 
@@ -179,11 +149,11 @@ class Eiten:
 
         # Simulation
         print("\n+$ Simulating future prices using monte carlo...")
-        self._monte_carlo()
+        self._monte_carlo(self.args.future_bars)
         self.draw_plot("output/monte_carlo.png")
         return
 
-    def draw_plot(self, filename="output/graph.png"):
+    def draw_plot(self, filename="output/graph.png", figsize=(12, 6)):
         """
         Draw plots
         """
@@ -194,7 +164,7 @@ class Eiten:
         plt.rcParams['axes.titlesize'] = "large"
         plt.rcParams['axes.labelsize'] = "medium"
         plt.rcParams['lines.linewidth'] = 2
-        plt.rcParams['figure.figsize'] = (12, 6)
+        plt.rcParams['figure.figsize'] = figsize
 
         plt.grid()
         plt.legend(fontsize=14)
@@ -203,14 +173,12 @@ class Eiten:
         else:
             plt.tight_layout()
             plt.show()
-        plt.cla()
+        # plt.cla()
+        plt.clf()
 
-    def print_and_plot_portfolio_weights(self, weights: dict,
-                                         strategy: str, plot_num: int) -> None:
-        plt.style.use('seaborn-white')
-        plt.rc('grid', linestyle="dotted", color='#a0a0a0')
-        plt.rcParams['axes.edgecolor'] = "#04383F"
-        plt.rcParams['figure.figsize'] = (12, 6)
+    def print_and_plot_portfolio_weights(self,
+                                         weights: dict, strategy: str,
+                                         plot_num: int, figsize=(12, 6)):
 
         print("\n-------- Weights for %s --------" % strategy)
         symbols = list(weights.keys())
@@ -222,7 +190,7 @@ class Eiten:
         x = np.arange(len(weights))
         plt.bar(x + (width * (plot_num - 1)) + 0.05,
                 list(weights.values()), label=strategy, width=width)
-        plt.xticks(x, symbols)
+        plt.xticks(x, symbols, rotation=90)
         plt.yticks(fontsize=14)
         plt.xlabel("Symbols", fontsize=14)
         plt.ylabel("Weight in Portfolio", fontsize=14)
