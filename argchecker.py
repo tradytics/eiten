@@ -23,3 +23,4 @@ class ArgChecker:
         args.market_index = str(args.market_index).upper()
         if args.history_to_use != "all":
             args.history_to_use = int(args.history_to_use)
+        return args

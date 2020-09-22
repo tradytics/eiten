@@ -7,111 +7,123 @@ import random
 import collections
 import numpy as np
 import pandas as pd
+import scipy.stats as st
 import matplotlib.pyplot as plt
 import warnings
+from utils import dotdict, get_price_deltas, get_log_returns
+from utils import get_predicted_returns
 warnings.filterwarnings("ignore")
-
-# Styling for plots
-plt.style.use('seaborn-white')
-plt.rc('grid', linestyle="dotted", color='#a0a0a0')
-plt.rcParams['axes.edgecolor'] = "#04383F"
 
 
 class BackTester:
     """
     Backtester module that does both backward and forward testing for our portfolios.
     """
-    def __init__(self):
-        print("\n--# Backtester has been initialized")
 
-    def calculate_percentage_change(self, old, new):
+    @staticmethod
+    def filter_short(weights, long_only):
         """
-        Percentage change
+        Manage portfolio weights. If portfolio is long only, 
+        set the negative weights to zero.
         """
-        return ((new - old) * 100) / old
+        if long_only:
+            return np.array([max(i, 0) for i in weights])
+        return weights
 
-    def portfolio_weight_manager(self, weight, is_long_only):
-        """
-        Manage portfolio weights. If portfolio is long only, set the negative weights to zero.
-        """
-        if is_long_only == 1:
-            weight = max(weight, 0)
-        else:
-            weight = weight
-        return weight
+    @staticmethod
+    def plot_market(market_returns):
+        x = np.arange(len(market_returns))
+        plt.plot(x, market_returns, linewidth=2.0,
+                 color='#282828', label='Market Index', linestyle='--')
 
-    def back_test(self, symbol_names, portfolio_weights_dictionary, portfolio_data_dictionary, historical_price_market, is_long_only, market_chart, strategy_name):
-        """
-        Main backtest function. Takes in the portfolio weights and compares the portfolio returns with a market index of your choice.
-        """
-
-        # Get market returns during the backtesting time
-        historical_price_market = list(historical_price_market["Close"])
-        market_returns = [self.calculate_percentage_change(historical_price_market[i - 1], historical_price_market[i]) for i in range(1, len(historical_price_market))]
-        market_returns_cumulative = np.cumsum(market_returns)
-
-        # Get invidiual returns for each stock in our portfolio
-        normal_returns_matrix = []
-        for symbol in symbol_names:
-            symbol_historical_prices = list(portfolio_data_dictionary[symbol]["historical_prices"]["Close"])
-            symbol_historical_returns = [self.calculate_percentage_change(symbol_historical_prices[i - 1], symbol_historical_prices[i]) for i in range(1, len(symbol_historical_prices))]
-            normal_returns_matrix.append(symbol_historical_returns)
-
-        # Get portfolio returns
-        normal_returns_matrix = np.array(normal_returns_matrix).transpose()
-        portfolio_weights_vector = np.array([self.portfolio_weight_manager(portfolio_weights_dictionary[symbol], is_long_only) for symbol in portfolio_weights_dictionary]).transpose()
-        portfolio_returns = np.dot(normal_returns_matrix, portfolio_weights_vector)
-        portfolio_returns_cumulative = np.cumsum(portfolio_returns)
-
-        # Plot returns
-        x = np.arange(len(portfolio_returns_cumulative))
-        plt.plot(x, portfolio_returns_cumulative, linewidth = 2.0, label = strategy_name)
-        plt.axhline(y = 0, linestyle = 'dotted', alpha = 0.3, color = 'black')
-        if market_chart:
-            x = np.arange(len(market_returns_cumulative))
-            plt.plot(x, market_returns_cumulative, linewidth = 2.0, color = '#282828', label = 'Market Index', linestyle = '--')
-
-        # Plotting styles
-        plt.title("Backtest Results", fontsize = 14)
-        plt.xlabel("Bars (Time Sorted)", fontsize = 14)
-        plt.ylabel("Cumulative Percentage Return", fontsize = 14)
-        plt.xticks(fontsize = 14)
-        plt.yticks(fontsize = 14)
-
-    def future_test(self, symbol_names, portfolio_weights_dictionary, portfolio_data_dictionary, future_price_market, is_long_only, market_chart, strategy_name):
-        """
-        Main future test function. If future data is available i.e is_test is set to 1 and future_bars set to > 0, this takes in the portfolio weights and compares the portfolio returns with a market index of your choice in the future.
-        """
-
-        # Get future prices
-        future_price_market = [item[4] for item in list(future_price_market)]
-        market_returns = [self.calculate_percentage_change(future_price_market[i - 1], future_price_market[i]) for i in range(1, len(future_price_market))]
-        market_returns_cumulative = np.cumsum(market_returns)
-
-        # Get invidiual returns for each stock in our portfolio
-        normal_returns_matrix = []
-        for symbol in symbol_names:
-            symbol_historical_prices = [item[4] for item in list(portfolio_data_dictionary[symbol]["future_prices"])]
-            symbol_historical_returns = [self.calculate_percentage_change(symbol_historical_prices[i - 1], symbol_historical_prices[i]) for i in range(1, len(symbol_historical_prices))]
-            normal_returns_matrix.append(symbol_historical_returns)
-
-        # Get portfolio returns
-        normal_returns_matrix = np.array(normal_returns_matrix).transpose()
-        portfolio_weights_vector = np.array([self.portfolio_weight_manager(portfolio_weights_dictionary[symbol], is_long_only) for symbol in portfolio_weights_dictionary]).transpose()
-        portfolio_returns = np.dot(normal_returns_matrix, portfolio_weights_vector)
-        portfolio_returns_cumulative = np.cumsum(portfolio_returns)
-
+    @staticmethod
+    def plot_test(**kwargs):
+        # Styling for plots
+        kwargs = dotdict(kwargs)
+        plt.style.use('seaborn-white')
+        plt.rc('grid', linestyle="dotted", color='#a0a0a0')
+        plt.rcParams['figure.figsize'] = (18, 6)
+        plt.rcParams['axes.edgecolor'] = "#04383F"
+        plt.rcParams['axes.titlesize'] = "large"
+        plt.rcParams['axes.labelsize'] = "medium"
+        plt.rcParams['lines.linewidth'] = 2
         # Plot
-        x = np.arange(len(portfolio_returns_cumulative))
-        plt.axhline(y = 0, linestyle = 'dotted', alpha = 0.3, color = 'black')
-        plt.plot(x, portfolio_returns_cumulative, linewidth = 2.0, label = strategy_name)
-        if market_chart:
-            x = np.arange(len(market_returns_cumulative))
-            plt.plot(x, market_returns_cumulative, linewidth = 2.0, color = '#282828', label = 'Market Index', linestyle = '--')
+        plt.axhline(y=0, linestyle='dotted', alpha=0.3, color='black')
 
         # Plotting styles
-        plt.title("Future Test Results", fontsize = 14)
-        plt.xlabel("Bars (Time Sorted)", fontsize = 14)
-        plt.ylabel("Cumulative Percentage Return", fontsize = 14)
-        plt.xticks(fontsize = 14)
-        plt.yticks(fontsize = 14)
+        kwargs.df.plot(fontsize=14, title=kwargs.title,
+                       xlabel=kwargs.xlabel, ylabel=kwargs.ylabel,)
+
+    @staticmethod
+    def get_test(p_weights, data, direction: str, long_only: bool):
+        """
+        Main backtest function. Takes in the portfolio weights and compares
+        the portfolio returns with a market index of your choice.
+        """
+
+        assert (direction in ["historical", "future", "sim"]
+                ), "direction must be 'historical', 'future' or 'sim'"
+
+        # Get invidiual returns for each stock in our portfolio
+        normal_returns_matrix = []
+        symbol_historical_prices = data[direction]
+
+        # Get portfolio returns
+        normal_returns_matrix = get_price_deltas(
+            symbol_historical_prices).cumsum()
+        portfolio_returns = np.dot(normal_returns_matrix, p_weights)
+
+        return portfolio_returns
+
+    @staticmethod
+    def get_market_returns(market_data, direction):
+        assert (direction in ["historical", "future", "sim"]
+                ), "direction must be 'historical', 'future' or 'sim'"
+        # Get future prices
+        future_price_market = market_data[direction]
+        market_returns = get_price_deltas(future_price_market)
+        return np.cumsum(market_returns)
+
+    @staticmethod
+    def simulate_future_prices(data: dict, r_func,
+                               simulation_timesteps: int = 30) ->pd.DataFrame:
+        """Simulates the price of a collection of stocks in the future
+
+        [description]
+        :param data: a dictionary with the loaded data
+        :type data: dict
+        :param simulation_timesteps: number of steps, defaults to 30
+        :type simulation_timesteps: number, optional
+        :returns: A dataframe of simulated prices
+        :rtype: pd.Dataframe
+        """
+
+        # Get log returns from historical data
+        close_prices = data["historical"]
+        returns = r_func(close_prices)
+        symbol_simulations = []
+        for col in returns.columns:
+            # Get distribution of returns
+            hist = np.histogram(returns[col], bins=32)
+            hist_dist = st.rv_histogram(hist)  # Distribution function
+
+            simulations = []
+            # Do 25 iterations to simulate prices
+            for _ in range(100):
+                timeseries = [close_prices[col].values[-1]]
+                for _ in range(min(simulation_timesteps,
+                                   data["future"].shape[0])):
+                    # Get simulated return
+                    return_value = np.round(
+                        np.exp(hist_dist.ppf(random.uniform(0, 1))), 5)
+                    data_point = timeseries[-1] * return_value
+
+                    # Add to list
+                    timeseries.append(data_point)
+                # print(timeseries)
+                simulations.append(np.array(timeseries))
+            symbol_simulations.append(np.mean(np.array(simulations), axis=0))
+
+        df = pd.DataFrame(columns=returns.columns,
+                          data=np.array(symbol_simulations).T)
+        return df

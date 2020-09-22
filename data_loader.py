@@ -15,39 +15,57 @@ class DataEngine:
 
         # Stocks list
         self.directory_path = str(os.path.dirname(os.path.abspath(__file__)))
-        self.stocks_file_path = f"{self.directory_path}/{self.args.stocks_file_path}"
+        str_path = f"{self.directory_path}/{self.args.stocks_file_path}"
+        self.stocks_file_path = str_path
         self.stocks_list = []
 
         # Load stock names in a list
         self.load_stocks_from_file()
 
-        # Dictionary to store data. This will only store and save data if the argument is_save_dictionary is 1.
+        # Dictionary to store data. This will only store and save data if
+        # the argument is_save_dictionary is 1.
         self.data_dictionary = {}
 
         # Data length
-        self.stock_data_length = []
+        self.stock_data_length = 0
 
     def load_stocks_from_file(self):
         """
         Load stock names from the file
         """
         print("Loading all stocks from file...")
-        stocks_list = open(self.stocks_file_path, "r").readlines()
-        stocks_list = [str(item).strip("\n") for item in stocks_list]
+        stocks_list = []
+        with open(self.stocks_file_path, "r") as f:
+            stocks_list = [str(item).strip() for item in f]
 
         # Load symbols
         stocks_list = list(sorted(set(stocks_list)))
         print("Total number of stocks: %d" % len(stocks_list))
         self.stocks_list = stocks_list
 
-    def get_most_frequent_key(self, input_list):
+    def get_most_frequent_count(self, input_list):
         counter = collections.Counter(input_list)
         return list(counter.keys())[0]
 
-    def get_data(self, symbol):
+    def _split_data(self, data):
+        if self.args.is_test:
+
+            return (data.iloc[:-self.args.future_bars]["Adj Close"].values,
+                    data.iloc[-self.args.future_bars:]["Adj Close"].values)
+        return data["Adj Close"].values, None
+
+    def _format_symbol(self, s):
+        x = s.upper()
+        x = x.replace(".VN", ".V")
+        if len(x.split(".")) > 2:
+            x = x.replace(".", "-", 1)
+        return x
+
+    def get_data(self, symbol_raw):
         """
         Get stock data from yahoo finance.
         """
+        symbol = self._format_symbol(symbol_raw)
         future_prices = None
         historical_prices = None
         # Find period
@@ -70,24 +88,12 @@ class DataEngine:
                 interval=interval,
                 auto_adjust=False,
                 progress=False)
-            stock_prices = stock_prices.reset_index()
-            try:
-                stock_prices = stock_prices.drop(columns=["Adj Close"])
-            except Exception as e:
-                print("Exception", e)
+            # stock_prices = stock_prices.reset_index()
 
-            data_length = stock_prices.shape[0]
-            self.stock_data_length.append(data_length)
-
-            # After getting some data, ignore partial data from yfinance
-            # based on number of data samples
-            if len(self.stock_data_length) > 5:
-                most_frequent_key = self.get_most_frequent_key(
-                    self.stock_data_length)
-                if (data_length != most_frequent_key and
-                    data_length != self.args.history_to_use and
-                        symbol != self.args.market_index):  # Needs index
-                    return [], [], True
+            if self.stock_data_length == 0:
+                self.stock_data_length = stock_prices.shape[0]
+            elif stock_prices.shape[0] != self.stock_data_length:
+                raise Exception(f"{symbol}: Invalid Stock Length")
 
             if self.args.history_to_use == "all":
                 # For some reason, yfinance gives some 0
@@ -96,30 +102,13 @@ class DataEngine:
             else:
                 stock_prices = stock_prices.iloc[-self.args.history_to_use:]
 
-            if self.args.is_test == 1:
-                future_prices = stock_prices.iloc[-self.args.future_bars:]
-                historical_prices = stock_prices.iloc[:-self.args.future_bars]
-            else:
-                historical_prices = stock_prices
+            historical_prices, future_prices = self._split_data(stock_prices)
 
-            if stock_prices.shape[0] == 0:
-                return [], [], True
         except Exception as e:
             print("Exception", e)
-            return [], [], True
-
-        return historical_prices, future_prices.values.tolist(), False
-
-    def get_market_index_price(self):
-        """
-        Gets market index price e.g SPY. One can change it to some other index
-        """
-        symbol = self.args.market_index
-        stock_price_data, future_prices, not_found = self.get_data(symbol)
-        if not_found:
             return None, None
 
-        return stock_price_data, future_prices
+        return historical_prices, future_prices
 
     def collect_data_for_all_tickers(self):
         """
@@ -127,54 +116,44 @@ class DataEngine:
         """
 
         print("Loading data for all stocks...")
-        symbol_names = []
-        historical_price = []
-        future_price = []
+        data_dict = {"historical": pd.DataFrame(),
+                     "future": pd.DataFrame()
+                     }
 
         # Any stock with very low volatility is ignored.
         # You can change this line to address that.
         for i in tqdm(range(len(self.stocks_list))):
             symbol = self.stocks_list[i]
             try:
-                stock_price_data, future_prices, not_found = self.get_data(
-                    symbol)
-                if not not_found:
-                    # Add to lists
-                    symbol_names.append(symbol)
-                    historical_price.append(stock_price_data)
-                    future_price.append(future_prices)
+                historical_data, future_data = self.get_data(symbol)
+                if historical_data is not None:
+                    data_dict["historical"][symbol] = historical_data
+                if future_data is not None:
+                    data_dict["future"][symbol] = future_data
             except Exception as e:
                 print("Exception", e)
                 continue
+        data_dict["historical"] = data_dict["historical"].fillna(1)
+        data_dict["future"] = data_dict["future"].fillna(1)
 
-        # Sometimes, there are some errors in feature generation or price
-        # extraction, let us remove that stuff
-        historical_price_info, future_price_info, symbol_names = self.remove_bad_data(
-            historical_price, future_price, symbol_names)
-        for i in range(0, len(symbol_names)):
-            self.data_dictionary[symbol_names[i]] = {
-                "historical_prices": historical_price_info[i],
-                "future_prices": future_price_info[i]}
+        try:
+            data_dict["historical"].to_csv("historical.csv")
+            data_dict["future"].to_csv("future.csv")
 
-        return self.data_dictionary
+        except Exception as e:
+            print("Exception: ", e)
 
-    def remove_bad_data(self, historical_price, future_price, symbol_names):
-        """
-        Remove bad data i.e data that had some errors while scraping or feature generation
+        # try:
+        #     plt.style.use('seaborn-white')
+        #     plt.rc('grid', linestyle="dotted", color='#a0a0a0')
+        #     plt.rcParams['axes.edgecolor'] = "#04383F"
+        #     plt.rcParams['figure.figsize'] = (16, 9)
+        #     data_dict["historical"].plot()
+        #     plt.savefig("./output/gt_historical.png")
+        #     data_dict["future"].plot()
+        #     plt.savefig("./output/gt_future.png")
+        #     plt.clf()
+        # except Exception as e:
+        #     print("Exception: ", e)
 
-        *** This can be much more improved with dicts and filter function.
-        """
-
-        length_dictionary = collections.Counter(
-            [i.shape[0] for i in historical_price])
-        length_dictionary = list(length_dictionary.keys())
-        most_common_length = length_dictionary[0]
-
-        filtered_historical_price, filtered_future_prices, filtered_symbols = [], [], [], 
-        for i in range(len(future_price)):
-            if historical_price[i].shape[0] == most_common_length:
-                filtered_symbols.append(symbol_names[i])
-                filtered_historical_price.append(historical_price[i])
-                filtered_future_prices.append(future_price[i])
-
-        return filtered_historical_price, filtered_future_prices, filtered_symbols
+        return data_dict

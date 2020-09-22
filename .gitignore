@@ -1,3 +1,9 @@
-
+.vscode
 *.pyc
 *.png
+notebooks
+*.csv
+*.txt
+*.txt
+*.ipynb
+
